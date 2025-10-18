@@ -58,6 +58,7 @@ dependencies:
   bloc: ^9.0.1
   flutter_bloc: ^9.1.1
   flutter_displaymode: ^0.7.0
+  libsignal_protocol_dart: ^0.7.2
 
 dev_dependencies:
   flutter_lints: ^6.0.0
