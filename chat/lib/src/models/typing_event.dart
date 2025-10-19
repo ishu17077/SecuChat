@@ -20,7 +20,11 @@ class TypingEvent {
 
   TypingEvent({required this.from, required this.to, required this.event});
 
-  toJSON() => {"from": from, "to": to, "event": event.value()};
+  Map<String, dynamic> toJSON() => {
+    "from": from,
+    "to": to,
+    "event": event.value(),
+  };
 
   factory TypingEvent.fromJSON(Map<String, dynamic> map) {
     TypingEvent typingEvent = TypingEvent(

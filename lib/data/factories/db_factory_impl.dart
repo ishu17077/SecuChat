@@ -24,7 +24,7 @@ class LocalDatabaseFactory {
     }
     String databasePath = await getDatabasesPath();
     String dbPath = join(databasePath, "secuchat.db");
-    _database = await openDatabase(dbPath, onCreate: _populateDb, version: 1);
+    _database = await openDatabase(dbPath, onCreate: _populateDb);
     return _database!;
   }
 
@@ -72,7 +72,8 @@ class LocalDatabaseFactory {
       ${UserTable.colEmail} VARCHAR(255) NOT NULL,
       ${UserTable.colName} VARCHAR(255) NOT NULL,
       ${UserTable.colUsername} VARCHAR(255) NOT NULL,
-      ${UserTable.photoUrl} TEXT NOT NULL
+      ${UserTable.photoUrl} TEXT,
+      ${UserTable.privateKeyJwb} TEXT NOT NULL,
     )""").then((_) {
       debugPrint("Successfully created ${UserTable.tableName} table");
     }).catchError((error) {

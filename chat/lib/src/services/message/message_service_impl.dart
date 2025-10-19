@@ -1,20 +1,22 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:chat/src/models/message.dart';
 import 'package:chat/src/models/user.dart';
 import 'package:chat/src/services/encryption/encryption_contract.dart';
 import 'package:chat/src/services/message/message_service_contract.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:flutter/foundation.dart';
 
 class MessageService implements IMessageService {
   final FirebaseFirestore _firestore;
-  final IEncryption _encryption;
+  // final IEncryption _encryption;
   final StreamController<Message> _controller =
       StreamController<Message>.broadcast();
   StreamSubscription? _changeFeed;
+  late final Random random = Random.secure();
 
-  MessageService(this._firestore, {required IEncryption encryption})
-    : _encryption = encryption;
+  MessageService(this._firestore);
 
   @override
   void dispose() {
@@ -30,11 +32,7 @@ class MessageService implements IMessageService {
 
   @override
   Future<Message> send(Message message) async {
-    //TODO: Impl Encryption
-    // assert(message.iv != null, "IV cannot be null");
     late final Message messageReturn;
-    //TODO: Impl Encrytion
-    // message.contents = _encryption.encrypt(message.contents);
     DocumentReference<Map<String, dynamic>> docRef = await _firestore
         .collection("messages")
         .add(message.toJSON());
@@ -48,7 +46,7 @@ class MessageService implements IMessageService {
         .where("to", isEqualTo: user.id)
         .snapshots()
         .listen((QuerySnapshot<Map<String, dynamic>> snapshot) {
-          snapshot.docChanges.forEach((element) {
+          snapshot.docChanges.forEach((element) async {
             switch (element.type) {
               case DocumentChangeType.added:
                 if (element.doc.data() == null) {
@@ -58,6 +56,7 @@ class MessageService implements IMessageService {
                   element.doc.id,
                   element.doc.data()!,
                 );
+
                 _controller.sink.add(message);
                 _removeDeliveredMessage(message);
               default:
@@ -86,4 +85,5 @@ class MessageService implements IMessageService {
   Message _mapIdToMessage(String id, Map<String, dynamic> messageMap) {
     return Message.fromJSON({"id": id, ...messageMap});
   }
+
 }

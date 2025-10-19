@@ -12,7 +12,7 @@ class HomeCubit extends Cubit<HomeState> {
     final userJson = _localCache.fetch("USER");
     userJson["last_seen"] = DateTime.now();
     userJson["active"] = true;
-
+    
     final user = User.fromJSON(userJson);
     return user;
   }

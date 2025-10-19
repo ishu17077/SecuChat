@@ -1,5 +1,6 @@
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:secuchat/cache/local_cache.dart';
@@ -60,15 +61,16 @@ class CompositionRoot {
     _googleSignIn = GoogleSignIn.instance;
     _userService = UserService(_firebaseFirestore);
     _db = await LocalDatabaseFactory().getDatabase();
-    _encryption =
-        await EncryptionService(Encrypter(AES(Key.allZerosOfLength(32))));
-    _messageService =
-        MessageService(_firebaseFirestore, encryption: _encryption);
+    _messageService = MessageService(_firebaseFirestore);
     _typingNotification = TypingNotification(_firebaseFirestore);
     _receiptService = ReceiptService(_firebaseFirestore);
     _dataSource = SqfliteDatasource(_db);
-    final sp = await SharedPreferences.getInstance();
-    _localCache = LocalCache(sp);
+    final _encryptedSharedPref = EncryptedSharedPreferences(
+        prefs: await SharedPreferences.getInstance(),
+        mode: AESMode.gcm,
+        randomKeyKey: 'Color#E2330');
+    ;
+    _localCache = LocalCache(_encryptedSharedPref);
     _messageBloc = MessageBloc(_messageService);
     _typingNotifBloc = TypingNotifBloc(_typingNotification);
     _receiptBloc = ReceiptBloc(_receiptService);

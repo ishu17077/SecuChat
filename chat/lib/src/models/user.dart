@@ -6,7 +6,7 @@ class User {
   final String username;
   final String email;
   //TODO: Impl of publickey
-  // final String publicKey;
+  String? publicKeyJwb;
   final String? photoUrl;
   String? _id;
   bool active;
@@ -16,9 +16,8 @@ class User {
     required this.name,
     required this.email,
     required this.username,
-
     required this.lastSeen,
-    // required this.publicKey,
+    required this.publicKeyJwb,
     this.active = false,
     this.photoUrl,
     String? id,
@@ -32,7 +31,7 @@ class User {
     "username": username,
     "email": email,
     "photo_url": photoUrl,
-    // "public_k"
+    "public_key_jwb": publicKeyJwb,
     "last_seen": lastSeen,
     "active": active,
   };
@@ -41,6 +40,7 @@ class User {
     User user = User(
       username: map["username"]!,
       name: map["name"] ?? "Anonymous",
+      publicKeyJwb: map["public_key"],
       email: map["email"]!,
       lastSeen: (map["last_seen"] is DateTime
           ? map["last_seen"]

@@ -11,9 +11,13 @@ class UserService implements IUserService {
   @override
   Future<User> connect(User user) async {
     assert(user.id != null, "User id cannot be null");
-    final userPresent = await fetch(user.id!);
+    final userPresent = await fetchUserId(user.id!);
     user.active = true;
     user.lastSeen = DateTime.now();
+    if (userPresent != null &&
+        (user.publicKeyJwb != null || user.publicKeyJwb!.isNotEmpty)) {
+      userPresent.publicKeyJwb = user.publicKeyJwb;
+    }
     if (userPresent == null) {
       return await _registerUserToDatabase(user);
     }
@@ -43,7 +47,7 @@ class UserService implements IUserService {
   }
 
   @override
-  Future<User?> fetch(String id) async {
+  Future<User?> fetchUserId(String id) async {
     final DocumentSnapshot<Map<String, dynamic>> doc = await _firebaseFirestore
         .collection("users")
         .doc(id)

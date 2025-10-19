@@ -293,6 +293,7 @@ class _HomeState extends State<Home>
     final chatsCubit = context.read<ChatsCubit>();
     context.read<MessageBloc>().stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
+        
         await chatsCubit.viewModel
             .receivedMessage(state.message.from, state.message)
             .then(

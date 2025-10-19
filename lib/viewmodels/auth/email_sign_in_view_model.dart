@@ -2,7 +2,8 @@ import 'package:chat/chat.dart' as chat;
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 
 class EmailSignInViewModel extends AuthViewModel {
-  EmailSignInViewModel(super.auth, super.userService, super.localCache);
+  EmailSignInViewModel(
+      super.auth, super.userService, super.localCache, super._encryption);
 
   Future<chat.User?> signIn({
     required String email,
@@ -18,11 +19,12 @@ class EmailSignInViewModel extends AuthViewModel {
         name: '',
         email: '',
         username: '',
+        publicKeyJwb: null,
         lastSeen: DateTime.now(),
         active: true,
         id: userCreds.user!.uid);
-    final actualUser = await super.connectUser(user);
-    return (actualUser);
+    final actualUser = await connectUser(user);
+    return actualUser;
   }
 
   Future<chat.User?> signUp(
@@ -30,6 +32,7 @@ class EmailSignInViewModel extends AuthViewModel {
       required String username,
       required String email,
       required String password,
+      required String publicKeyJwb,
       String? photoUrl}) async {
     final userCreds = await auth.createUserWithEmailAndPassword(
         email: email, password: password);
@@ -41,6 +44,7 @@ class EmailSignInViewModel extends AuthViewModel {
         name: name,
         email: email,
         username: username,
+        publicKeyJwb: publicKeyJwb,
         lastSeen: DateTime.now(),
         active: true,
         photoUrl: photoUrl,

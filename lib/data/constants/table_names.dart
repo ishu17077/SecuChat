@@ -26,4 +26,5 @@ class UserTable {
   static const String colEmail = "email";
   static const String colName = "name";
   static const String photoUrl = "photo_url";
+  static const String privateKeyJwb = "private_key_jwb";
 }

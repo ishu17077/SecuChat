@@ -4,13 +4,16 @@ import 'package:chat/chat.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebaseAuth;
 import 'package:flutter/foundation.dart';
 import 'package:secuchat/cache/local_cache.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 class AuthViewModel {
   final IUserService _userService;
   final ILocalCache _localCache;
+  final EncryptionViewmodel _encryptionViewmodel;
   final firebaseAuth.FirebaseAuth auth;
 
-  const AuthViewModel(this.auth, this._userService, this._localCache);
+  const AuthViewModel(this.auth, this._userService, this._localCache,
+      this._encryptionViewmodel);
 
   User? get signedInUser {
     User user;
@@ -44,9 +47,19 @@ class AuthViewModel {
   Future<User?> connectUser(User user) async {
     user.active = true;
     user.lastSeen = DateTime.now();
+    //TODO: IMpl private key
+    // final privateKey = await _localCache.encryptGet('private_key');
+    // if (user.publicKeyJwb == null ||
+    //     user.publicKeyJwb!.isEmpty ||
+    //     privateKey.isEmpty) {
+    //   final jwkPair = await _encryption.generateKeys();
+    //   user.publicKeyJwb = jwkPair.publicKey;
+    //   await _localCache.encryptSave('PRIVATE_KEY', data: jwkPair.privateKey);
+    // }
     try {
       final connectedUser = await _userService.connect(user);
       await _localCache.save("USER", data: connectedUser.toJSON());
+
       return connectedUser;
     } catch (e) {
       debugPrint(e.toString());
@@ -68,6 +81,7 @@ class AuthViewModel {
 
   Future<void> signOut() async {
     _localCache.clear("USER");
+    _localCache.clear("PRIVATE_KEY");
     await auth.signOut();
   }
 }

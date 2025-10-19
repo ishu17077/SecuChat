@@ -26,7 +26,7 @@ abstract class BaseViewModel {
     var chat = await _getChat(message.chatId, message.userId!, null);
 
     if (chat == null) {
-      final User? user = await _userService.fetch(message.userId!);
+      final User? user = await _userService.fetchUserId(message.userId!);
       if (user == null) {
         debugPrint("Cannot find user for id ${message.userId}");
         return;

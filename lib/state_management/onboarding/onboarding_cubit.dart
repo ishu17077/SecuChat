@@ -6,6 +6,7 @@ import 'package:secuchat/state_management/onboarding/onboarding_state.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:secuchat/viewmodels/auth/email_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/auth/google_sign_in_view_model.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 enum AuthType { google, email }
 
@@ -13,10 +14,11 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   final AuthViewModel _authViewModel;
   final GoogleSignInViewModel _googleSignInViewModel;
   final EmailSignInViewModel _emailSignInViewModel;
+  final EncryptionViewmodel _encryptionViewmodel;
   //TODO: Impl Image uploader
 
   OnboardingCubit(this._authViewModel, this._emailSignInViewModel,
-      this._googleSignInViewModel)
+      this._googleSignInViewModel, this._encryptionViewmodel)
       : super(OnboardingInitial());
 //TODO: Impl auth type
   Future<void> connect(User user) async {
@@ -35,6 +37,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(OnboardingFailure("Authentication interrupted!"));
         return;
       }
+      await _encryptionViewmodel.setKeys();
       emit(OnboardingSuccess(user));
       return;
     } catch (e) {
@@ -52,6 +55,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(OnboardingFailure("Invalid E-mail/password"));
         return;
       }
+      await _encryptionViewmodel.setKeys();
       emit(OnboardingSuccess(user));
       return;
     } catch (e) {
@@ -67,12 +71,18 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       String? photoUrl}) async {
     emit(OnboardingLoading());
     try {
+      await _encryptionViewmodel.setKeys();
       final user = await _emailSignInViewModel.signUp(
-          name: name, username: username, email: email, password: password);
+          name: name,
+          username: username,
+          email: email,
+          password: password,
+          publicKeyJwb: _encryptionViewmodel.publicKey!);
       if (user == null) {
         emit(OnboardingFailure("Invalid Email/Password"));
         return;
       }
+
       emit(OnboardingSuccess(user));
       return;
     } catch (e) {

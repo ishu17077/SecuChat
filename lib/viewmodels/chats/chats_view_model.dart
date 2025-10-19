@@ -21,7 +21,7 @@ class ChatsViewModel extends BaseViewModel {
         }
         //TODO: Fix this userService being called everytime
 
-        userService.fetch(chat.from.id!).then((user) {
+        userService.fetchUserId(chat.from.id!).then((user) {
           if (user == null) {
             throw Exception(
                 "User not found, the user might have deleted its account");

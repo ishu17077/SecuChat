@@ -177,6 +177,7 @@ class SqfliteDatasource implements IDataSource {
     Map<String, dynamic> userMap = user.toJSON();
     userMap.remove("last_seen");
     userMap.remove("active");
+    
     int userId = await _db.insert(UserTable.tableName, userMap,
         conflictAlgorithm: ConflictAlgorithm.replace);
     return userId;
