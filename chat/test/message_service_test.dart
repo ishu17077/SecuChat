@@ -26,10 +26,9 @@ void main() {
     querySnapshot = MockQuerySnapshot();
     documentChange = MockDocumentChange();
     query = MockQuery();
-    final encrypter = Encrypter(AES(Key.fromLength(32)));
-    encryption = EncryptionService(encrypter);
+    encryption = EncryptionService();
     documentSnapshot = MockQueryDocumentSnapshot();
-    messageService = MessageService(firebaseFirestore, encryption: encryption);
+    messageService = MessageService(firebaseFirestore);
     when(firebaseFirestore.collection("messages")).thenReturn(collectionRef);
     when(query.snapshots()).thenAnswer((realInvocation) {
       return Stream.value(querySnapshot);

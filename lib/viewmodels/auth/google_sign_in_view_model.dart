@@ -7,7 +7,7 @@ import 'package:chat/chat.dart' as chat;
 class GoogleSignInViewModel extends AuthViewModel {
   final GoogleSignIn _googleSignIn;
   GoogleSignInViewModel(this._googleSignIn, super.auth, super.userService,
-      super.localCache, super._encryption);
+      super.localCache, super.encryptionViewmodel);
 
   Future<chat.User?> signIn() async {
     //TODO: call initialize
@@ -34,7 +34,7 @@ class GoogleSignInViewModel extends AuthViewModel {
         email: userCreds.user!.email!,
         username: userCreds.user!.email!.split("@").first,
         photoUrl: userCreds.user!.photoURL,
-        publicKeyJwb: null,
+        publicKeyJwb: await encryptionViewmodel.generateKeys(),
         lastSeen: DateTime.now(),
         id: userCreds.user!.uid);
     await connectUser(user) == null

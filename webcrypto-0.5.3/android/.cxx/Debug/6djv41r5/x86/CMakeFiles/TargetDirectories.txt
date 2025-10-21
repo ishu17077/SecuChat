@@ -1,3 +1,0 @@
-/media/ishukumar5663/MR_X_SSD1/AndroidStudioProjects/e_2_e_encrypted_chat_app/webcrypto-0.5.3/android/.cxx/Debug/6djv41r5/x86/CMakeFiles/webcrypto.dir
-/media/ishukumar5663/MR_X_SSD1/AndroidStudioProjects/e_2_e_encrypted_chat_app/webcrypto-0.5.3/android/.cxx/Debug/6djv41r5/x86/CMakeFiles/edit_cache.dir
-/media/ishukumar5663/MR_X_SSD1/AndroidStudioProjects/e_2_e_encrypted_chat_app/webcrypto-0.5.3/android/.cxx/Debug/6djv41r5/x86/CMakeFiles/rebuild_cache.dir

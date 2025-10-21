@@ -6,43 +6,96 @@ import 'package:webcrypto/webcrypto.dart';
 
 class EncryptionViewmodel {
   final IEncryption _encryption;
+  final IUserService _userService;
   final IDataSource _dataSource;
   final ILocalCache _localCache;
-  List<EncrytionKey> keys = List.empty(growable: true);
+  final List<EncrytionKey> keys = List.empty(growable: true);
 
   String? _privatKey;
   String? publicKey;
 
-  EncryptionViewmodel(this._encryption, this._localCache, this._dataSource);
+  EncryptionViewmodel(
+      this._encryption, this._dataSource, this._localCache, this._userService);
 
 //TODO:n Impl this thing, this is wrong on so many levels
-  Future<void> setKeys() async {
-    if (_privatKey != null || _privatKey!.isNotEmpty) {
-      return;
-    }
-    _privatKey = await _localCache.encryptGet("PRIVATE_KEY");
+  Future<String> generateKeys() async {
+    final jwbKeys = await _encryption.generateKeys();
+    _privatKey = jwbKeys.privateKey;
+    await _localCache.encryptSave('PRIVATE_KEY', data: jwbKeys.privateKey);
+    return jwbKeys.publicKey;
+  }
+
+//TODO:n Impl this thing, this is wrong on so many levels
+  Future<void> preCacheKeys() async {
     try {
-      publicKey = User.fromJSON(await _localCache.fetch("USER")).publicKeyJwb;
+      // Get private key first
+      _privatKey ??= await _localCache.encryptGet('PRIVATE_KEY');
+      if (_privatKey == null) {
+        debugPrint('Private key not found in cache');
+        return;
+      }
+      final chats = await _dataSource.findAllChats();
+      if (chats.isEmpty) return;
+      final chatsBatch = chats.take(10).toList();
+      final futureUsers =
+          chatsBatch.map((chat) => _userService.fetchUserId(chat.userId));
+      final users = await Future.wait(futureUsers);
+      for (final user in users) {
+        if (user != null && !keys.any((key) => key.userId == user.id)) {
+          try {
+            final encryptionKey = EncrytionKey(
+                user.id!,
+                await _encryption.deriveKey(JsonWebKeyPair(
+                    privateKey: _privatKey!, publicKey: user.publicKeyJwb!)));
+            keys.add(encryptionKey);
+          } catch (e) {
+            debugPrint('Failed to generate key for user ${user.id}: $e');
+          }
+        }
+      }
+
+      debugPrint('Precached ${keys.length} encryption keys');
     } catch (e) {
-      debugPrint(e.toString());
-    }
-    if (_privatKey!.isEmpty || publicKey == null) {
-      final jwbkeypair = await _encryption.generateKeys();
-      final userMap = _localCache.fetch("USER");
-      final User user = User.fromJSON(userMap);
-      user.publicKeyJwb = jwbkeypair.publicKey;
-      await _localCache.save("USER", data: user.toJSON());
-      await _localCache.encryptSave("PRIVATE_KEY", data: jwbkeypair.privateKey);
-      _privatKey = jwbkeypair.privateKey;
+      debugPrint('Error in preCacheKeys: $e');
     }
   }
 
-  void getAcmKeys() {}
+  Future<EncrytionKey?> getChatAcmKey(String userId) async {
+    _privatKey ??= await _localCache.encryptGet('PRIVATE_KEY');
+    for (final key in keys) {
+      if (key.userId == userId) return key;
+    }
+    try {
+      User? user = await _dataSource.findUser(userId);
+      if (user == null) {
+        user = await _userService.fetchUserId(userId);
+      } else {
+        _checkKeyUpdatesInBackground(userId, user);
+      }
+      final encryptionKey = EncrytionKey(
+          userId,
+          await _encryption.deriveKey(JsonWebKeyPair(
+              privateKey: _privatKey!, publicKey: user!.publicKeyJwb!)));
+      keys.add(encryptionKey);
+      return encryptionKey;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _checkKeyUpdatesInBackground(String userId, User? user) {
+    _userService.fetchUserId(userId).then((value) async {
+      final aesGcmKey = await _encryption.deriveKey(JsonWebKeyPair(
+          privateKey: _privatKey!, publicKey: user!.publicKeyJwb!));
+      keys.firstWhere((element) => element.userId == userId).secretKey =
+          aesGcmKey;
+    });
+  }
 }
 
 class EncrytionKey {
   final String userId;
-  final AesGcmSecretKey secretKey;
+  AesGcmSecretKey secretKey;
 
   EncrytionKey(this.userId, this.secretKey);
 }

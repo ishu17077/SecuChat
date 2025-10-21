@@ -50,8 +50,7 @@ dependencies:
   path_provider: ^2.1.2
   shared_preferences: ^2.2.2
   sqflite: ^2.3.0
-  webcrypto:
-    path: ./webcrypto-0.5.3
+  webcrypto: ^0.5.8
   chat:
     path: ./chat
   equatable: ^2.0.7

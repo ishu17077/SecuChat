@@ -9,11 +9,11 @@ import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 class AuthViewModel {
   final IUserService _userService;
   final ILocalCache _localCache;
-  final EncryptionViewmodel _encryptionViewmodel;
+  final EncryptionViewmodel encryptionViewmodel;
   final firebaseAuth.FirebaseAuth auth;
 
-  const AuthViewModel(this.auth, this._userService, this._localCache,
-      this._encryptionViewmodel);
+  const AuthViewModel(
+      this.auth, this._userService, this._localCache, this.encryptionViewmodel);
 
   User? get signedInUser {
     User user;

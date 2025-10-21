@@ -14,11 +14,10 @@ class OnboardingCubit extends Cubit<OnboardingState> {
   final AuthViewModel _authViewModel;
   final GoogleSignInViewModel _googleSignInViewModel;
   final EmailSignInViewModel _emailSignInViewModel;
-  final EncryptionViewmodel _encryptionViewmodel;
   //TODO: Impl Image uploader
 
   OnboardingCubit(this._authViewModel, this._emailSignInViewModel,
-      this._googleSignInViewModel, this._encryptionViewmodel)
+      this._googleSignInViewModel)
       : super(OnboardingInitial());
 //TODO: Impl auth type
   Future<void> connect(User user) async {
@@ -37,7 +36,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(OnboardingFailure("Authentication interrupted!"));
         return;
       }
-      await _encryptionViewmodel.setKeys();
       emit(OnboardingSuccess(user));
       return;
     } catch (e) {
@@ -55,7 +53,6 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         emit(OnboardingFailure("Invalid E-mail/password"));
         return;
       }
-      await _encryptionViewmodel.setKeys();
       emit(OnboardingSuccess(user));
       return;
     } catch (e) {
@@ -71,13 +68,12 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       String? photoUrl}) async {
     emit(OnboardingLoading());
     try {
-      await _encryptionViewmodel.setKeys();
       final user = await _emailSignInViewModel.signUp(
-          name: name,
-          username: username,
-          email: email,
-          password: password,
-          publicKeyJwb: _encryptionViewmodel.publicKey!);
+        name: name,
+        username: username,
+        email: email,
+        password: password,
+      );
       if (user == null) {
         emit(OnboardingFailure("Invalid Email/Password"));
         return;

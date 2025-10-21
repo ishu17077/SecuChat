@@ -19,7 +19,7 @@ class EmailSignInViewModel extends AuthViewModel {
         name: '',
         email: '',
         username: '',
-        publicKeyJwb: null,
+        publicKeyJwb: await encryptionViewmodel.generateKeys(),
         lastSeen: DateTime.now(),
         active: true,
         id: userCreds.user!.uid);
@@ -32,7 +32,6 @@ class EmailSignInViewModel extends AuthViewModel {
       required String username,
       required String email,
       required String password,
-      required String publicKeyJwb,
       String? photoUrl}) async {
     final userCreds = await auth.createUserWithEmailAndPassword(
         email: email, password: password);
@@ -44,7 +43,7 @@ class EmailSignInViewModel extends AuthViewModel {
         name: name,
         email: email,
         username: username,
-        publicKeyJwb: publicKeyJwb,
+        publicKeyJwb: await encryptionViewmodel.generateKeys(),
         lastSeen: DateTime.now(),
         active: true,
         photoUrl: photoUrl,

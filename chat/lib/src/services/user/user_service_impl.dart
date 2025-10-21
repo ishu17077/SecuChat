@@ -48,16 +48,19 @@ class UserService implements IUserService {
 
   @override
   Future<User?> fetchUserId(String id) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc = await _firebaseFirestore
-        .collection("users")
-        .doc(id)
-        .get();
-    if (!doc.exists || doc.data() == null) {
-      debugPrint("Unable to find user");
-      return null;
+    try {
+      final DocumentSnapshot<Map<String, dynamic>> doc =
+          await _firebaseFirestore.collection("users").doc(id).get();
+      if (!doc.exists || doc.data() == null) {
+        debugPrint("Unable to find user");
+        return null;
+      }
+      if (doc.data() == null) return null;
+      return _mapIdToUser(id, doc.data()!);
+    } catch (e) {
+      debugPrint(e.toString());
     }
-    if (doc.data() == null) return null;
-    return _mapIdToUser(id, doc.data()!);
+    return null;
   }
 
   @override

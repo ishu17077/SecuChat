@@ -165,9 +165,12 @@ class SqfliteDatasource implements IDataSource {
   }
 
   @override
-  Future<User> findUser(String userId) async {
+  Future<User?> findUser(String userId) async {
     final userMaps = await _db.query(UserTable.tableName,
         where: "${UserTable.colId} = ?", whereArgs: [userId], limit: 1);
+    if (userMaps.isEmpty) {
+      return null;
+    }
     return User.fromJSON(userMaps.first);
   }
 
@@ -177,7 +180,7 @@ class SqfliteDatasource implements IDataSource {
     Map<String, dynamic> userMap = user.toJSON();
     userMap.remove("last_seen");
     userMap.remove("active");
-    
+
     int userId = await _db.insert(UserTable.tableName, userMap,
         conflictAlgorithm: ConflictAlgorithm.replace);
     return userId;

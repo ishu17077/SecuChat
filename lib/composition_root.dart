@@ -29,6 +29,7 @@ import 'package:encrypt/encrypt.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart' hide Key;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -53,6 +54,7 @@ class CompositionRoot {
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
   static late HomeRouter _homeRouter;
+  static late EncryptionViewmodel _encryptionViewmodel;
 
   static Future<void> configure() async {
     await Firebase.initializeApp();
@@ -77,11 +79,15 @@ class CompositionRoot {
     final viewModel = ChatsViewModel(_dataSource, userService: _userService);
     _chatsCubit = ChatsCubit(viewModel);
     _homeCubit = HomeCubit(_userService, _localCache);
-    _authViewModel = AuthViewModel(_firebaseAuth, _userService, _localCache);
-    _googleSignInViewModel = GoogleSignInViewModel(
-        _googleSignIn, _firebaseAuth, _userService, _localCache);
-    _emailSignInViewModel =
-        EmailSignInViewModel(_firebaseAuth, _userService, _localCache);
+    _encryptionViewmodel = EncryptionViewmodel(
+        _encryption, _dataSource, _localCache, _userService);
+    _authViewModel = AuthViewModel(
+        _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
+    _googleSignInViewModel = GoogleSignInViewModel(_googleSignIn, _firebaseAuth,
+        _userService, _localCache, _encryptionViewmodel);
+    _emailSignInViewModel = EmailSignInViewModel(
+        _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
+
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
   }
 
