@@ -76,8 +76,8 @@ final class EncryptionService implements IEncryption {
     var eCurve = EllipticCurve.p256;
     final keyPair = await EcdhPrivateKey.generateKey(eCurve);
     return JsonWebKeyPair(
-      privateKey: jsonEncode(keyPair.privateKey.exportJsonWebKey()),
-      publicKey: jsonEncode(keyPair.publicKey.exportJsonWebKey()),
+      privateKey: jsonEncode(await keyPair.privateKey.exportJsonWebKey()),
+      publicKey: jsonEncode(await keyPair.publicKey.exportJsonWebKey()),
       ellipticCurve: eCurve,
     );
   }

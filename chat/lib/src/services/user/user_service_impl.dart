@@ -14,8 +14,7 @@ class UserService implements IUserService {
     final userPresent = await fetchUserId(user.id!);
     user.active = true;
     user.lastSeen = DateTime.now();
-    if (userPresent != null &&
-        (user.publicKeyJwb != null || user.publicKeyJwb!.isNotEmpty)) {
+    if (userPresent != null && (user.publicKeyJwb != null)) {
       userPresent.publicKeyJwb = user.publicKeyJwb;
     }
     if (userPresent == null) {
