@@ -5,7 +5,7 @@ import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:webcrypto/webcrypto.dart';
 
 class EncryptionViewmodel {
-  final IEncryption _encryption;
+  final IEncryption encryption;
   final IUserService _userService;
   final IDataSource _dataSource;
   final ILocalCache _localCache;
@@ -15,13 +15,14 @@ class EncryptionViewmodel {
   String? publicKey;
 
   EncryptionViewmodel(
-      this._encryption, this._dataSource, this._localCache, this._userService);
+      this.encryption, this._dataSource, this._localCache, this._userService);
 
 //TODO:n Impl this thing, this is wrong on so many levels
   Future<String> generateKeys() async {
-    final jwbKeys = await _encryption.generateKeys();
+    final jwbKeys = await encryption.generateKeys();
     _privatKey = jwbKeys.privateKey;
     await _localCache.encryptSave('PRIVATE_KEY', data: jwbKeys.privateKey);
+    publicKey = jwbKeys.publicKey;
     return jwbKeys.publicKey;
   }
 
@@ -41,11 +42,12 @@ class EncryptionViewmodel {
           chatsBatch.map((chat) => _userService.fetchUserId(chat.userId));
       final users = await Future.wait(futureUsers);
       for (final user in users) {
+        
         if (user != null && !keys.any((key) => key.userId == user.id)) {
           try {
             final encryptionKey = EncrytionKey(
                 user.id!,
-                await _encryption.deriveKey(JsonWebKeyPair(
+                await encryption.deriveKey(JsonWebKeyPair(
                     privateKey: _privatKey!, publicKey: user.publicKeyJwb!)));
             keys.add(encryptionKey);
           } catch (e) {
@@ -74,7 +76,7 @@ class EncryptionViewmodel {
       }
       final encryptionKey = EncrytionKey(
           userId,
-          await _encryption.deriveKey(JsonWebKeyPair(
+          await encryption.deriveKey(JsonWebKeyPair(
               privateKey: _privatKey!, publicKey: user!.publicKeyJwb!)));
       keys.add(encryptionKey);
       return encryptionKey;
@@ -85,12 +87,14 @@ class EncryptionViewmodel {
 
   void _checkKeyUpdatesInBackground(String userId, User? user) {
     _userService.fetchUserId(userId).then((value) async {
-      final aesGcmKey = await _encryption.deriveKey(JsonWebKeyPair(
+      final aesGcmKey = await encryption.deriveKey(JsonWebKeyPair(
           privateKey: _privatKey!, publicKey: user!.publicKeyJwb!));
       keys.firstWhere((element) => element.userId == userId).secretKey =
           aesGcmKey;
     });
   }
+
+  
 }
 
 class EncrytionKey {

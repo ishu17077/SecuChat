@@ -1,7 +1,10 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:isolate';
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/home/home_cubit.dart';
@@ -11,11 +14,13 @@ import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 class Home extends StatefulWidget {
   final User me;
   final IHomeRouter router;
-  const Home(this.me, this.router, {super.key});
+  final EncryptionViewmodel _encryptionViewModel;
+  const Home(this.me, this.router, this._encryptionViewModel, {super.key});
   @override
   State<Home> createState() => _HomeState();
 }
@@ -42,6 +47,8 @@ class _HomeState extends State<Home>
         (!_user.active) ? await context.read<HomeCubit>().connect() : _user;
     await context.read<ChatsCubit>().chats();
     context.read<HomeCubit>().activeUsers(widget.me);
+    //! Spawn isolates
+    await widget._encryptionViewModel.preCacheKeys();
     //! me should be user from above comment
     context.read<MessageBloc>().add(MessageEvent.subscribed(widget.me));
     _updateChatsOnMessageReceived();
@@ -293,7 +300,6 @@ class _HomeState extends State<Home>
     final chatsCubit = context.read<ChatsCubit>();
     context.read<MessageBloc>().stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
-        
         await chatsCubit.viewModel
             .receivedMessage(state.message.from, state.message)
             .then(

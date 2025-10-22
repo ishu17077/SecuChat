@@ -19,10 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.35.4"
@@ -33,17 +29,15 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run webcrypto setup
-        run: flutter pub run webcrypto:setup
-
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
       - name: Run tests
         run: flutter test
       ##
       - name: Change working directory to chat module
         run: cd ./chat
+
+      - name: Run webcrypto setup
+        run: flutter pub run webcrypto:setup
+        working-directory: ./chat
 
       - name: Install dependencies
         run: flutter pub get

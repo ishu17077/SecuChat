@@ -15,6 +15,7 @@ class ChatViewModel extends BaseViewModel {
 
   Future<List<LocalMessage>> getMessages(String chatId) async {
     if (messages.isNotEmpty) {
+    
       return messages;
     }
     messages = await _dataSource.findMessages(chatId);

@@ -106,7 +106,7 @@ class CompositionRoot {
         BlocProvider(create: (context) => _receiptBloc),
         BlocProvider(create: (context) => _homeCubit),
       ],
-      child: Home(me, _homeRouter),
+      child: Home(me, _homeRouter, _encryptionViewmodel),
     );
   }
 
