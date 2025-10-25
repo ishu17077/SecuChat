@@ -3,6 +3,7 @@ import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:flutter/material.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 abstract class BaseViewModel {
   final IDataSource _dataSource;

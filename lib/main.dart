@@ -41,6 +41,7 @@ class MyApp extends StatelessWidget {
     900: Color(0xff000000),
   });
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -48,6 +49,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SecuChat',
       theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
         primarySwatch: greenAndroid,
         buttonTheme: const ButtonThemeData(
           buttonColor: Color(0xff0cf3e1),

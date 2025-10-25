@@ -40,7 +40,7 @@ class User {
     User user = User(
       username: map["username"]!,
       name: map["name"] ?? "Anonymous",
-      publicKeyJwb: map["public_key"],
+      publicKeyJwb: map["public_key_jwb"],
       email: map["email"]!,
       lastSeen: (map["last_seen"] is DateTime
           ? map["last_seen"]

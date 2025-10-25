@@ -2,6 +2,7 @@ import 'package:chat/chat.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 class ChatViewModel extends BaseViewModel {
   String? chatId;
@@ -10,12 +11,13 @@ class ChatViewModel extends BaseViewModel {
   List<LocalMessage> messages = List.empty(growable: true);
   int otherMessages = 0;
 
-  ChatViewModel(this._dataSource, this._userService)
-      : super(_dataSource, _userService);
+  ChatViewModel(
+    this._dataSource,
+    this._userService,
+  ) : super(_dataSource, _userService);
 
   Future<List<LocalMessage>> getMessages(String chatId) async {
     if (messages.isNotEmpty) {
-    
       return messages;
     }
     messages = await _dataSource.findMessages(chatId);
@@ -35,7 +37,7 @@ class ChatViewModel extends BaseViewModel {
         userId: message.to);
     if (chatId != null) {
       int id = await _dataSource.addMessage(localMessage);
-      //TODO: map id to local message
+      localMessage = _mapIdToLocalMessage(localMessage, id);
       this.messages.add(localMessage);
       return;
     }
@@ -74,5 +76,9 @@ class ChatViewModel extends BaseViewModel {
       }
     }
     await _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
+  }
+
+  LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, int id) {
+    return LocalMessage.fromJSON({...localMessage.toJSON(), "id": id});
   }
 }

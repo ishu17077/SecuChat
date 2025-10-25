@@ -63,6 +63,7 @@ class CompositionRoot {
     _googleSignIn = GoogleSignIn.instance;
     _userService = UserService(_firebaseFirestore);
     _db = await LocalDatabaseFactory().getDatabase();
+    _encryption = EncryptionService();
     _messageService = MessageService(_firebaseFirestore);
     _typingNotification = TypingNotification(_firebaseFirestore);
     _receiptService = ReceiptService(_firebaseFirestore);
@@ -71,16 +72,17 @@ class CompositionRoot {
         prefs: await SharedPreferences.getInstance(),
         mode: AESMode.gcm,
         randomKeyKey: 'Color#E2330');
-    ;
     _localCache = LocalCache(_encryptedSharedPref);
-    _messageBloc = MessageBloc(_messageService);
+    _encryptionViewmodel = EncryptionViewmodel(
+        _encryption, _dataSource, _localCache, _userService);
+
+    _messageBloc = MessageBloc(_messageService, _encryptionViewmodel);
     _typingNotifBloc = TypingNotifBloc(_typingNotification);
     _receiptBloc = ReceiptBloc(_receiptService);
     final viewModel = ChatsViewModel(_dataSource, userService: _userService);
     _chatsCubit = ChatsCubit(viewModel);
     _homeCubit = HomeCubit(_userService, _localCache);
-    _encryptionViewmodel = EncryptionViewmodel(
-        _encryption, _dataSource, _localCache, _userService);
+
     _authViewModel = AuthViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     _googleSignInViewModel = GoogleSignInViewModel(_googleSignIn, _firebaseAuth,
@@ -110,7 +112,8 @@ class CompositionRoot {
     );
   }
 
-  static Widget composeMessageThreadUi(User receiver, User me,
+  static Widget composeMessageThreadUi(
+      User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) {
     final viewModel = ChatViewModel(_dataSource, _userService);
     final messageThreadCubit = MessageThreadCubit(viewModel);
@@ -122,7 +125,7 @@ class CompositionRoot {
         BlocProvider.value(value: _typingNotifBloc),
       ],
       child: MessageThread(
-          receiver, me, _messageBloc, _chatsCubit, _typingNotifBloc,
+          receiver, me, _messageBloc, _chatsCubit, _typingNotifBloc, encryption,
           chatId: chatId ?? ''),
     );
   }
@@ -138,10 +141,10 @@ class CompositionRoot {
     ], child: Onboarding(onboardingRouter));
   }
 
-  static Widget composeNewChatUi(User me) {
+  static Widget composeNewChatUi(User me, EncryptionViewmodel encryption) {
     return MultiBlocProvider(providers: [
       BlocProvider.value(value: _chatsCubit),
       BlocProvider.value(value: _homeCubit)
-    ], child: NewChat(me, _homeRouter));
+    ], child: NewChat(me, _homeRouter, encryption));
   }
 }

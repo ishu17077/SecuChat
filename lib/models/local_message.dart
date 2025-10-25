@@ -18,25 +18,27 @@ class LocalMessage {
         MessageTable.colSender: message.from,
         MessageTable.colRecipient: message.to,
         MessageTable.colContents: message.contents,
+        MessageTable.colServerId: message.id!,
         MessageTable.colExecutedAt: receipt.time.toString(),
         MessageTable.colReceipt: receipt.status.value(),
         MessageTable.colCreatedAt: message.time.toString(),
       };
 
   factory LocalMessage.fromJSON(Map<String, dynamic> messageMap) {
-    final Message message = Message(
-      from: messageMap[MessageTable.colSender] ?? '',
-      to: messageMap[MessageTable.colReceipt] ?? '',
-      contents: messageMap[MessageTable.colContents] ?? '',
-      time: messageMap["created_at"] != null
+    final Message message = Message.fromJSON({
+      "id": messageMap[MessageTable.colServerId],
+      "from": messageMap[MessageTable.colSender] ?? '',
+      "to": messageMap[MessageTable.colReceipt] ?? '',
+      "contents": messageMap[MessageTable.colContents] ?? '',
+      "time": messageMap["created_at"] != null
           ? DateTime.parse(messageMap["created_at"])
           : DateTime.now(),
-    );
+    });
     final LocalMessage localMessage = LocalMessage(
       message,
       //TODO receipt time
       Receipt(
-        messageId: message.id ?? '',
+        messageId: message.id ?? "${messageMap["id"]}",
         recipientId: message.to,
         //TODO: Impl
         time: DateTime.tryParse(messageMap[MessageTable.colExecutedAt] ?? '') ??

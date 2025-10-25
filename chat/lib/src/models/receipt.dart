@@ -42,6 +42,8 @@ class Receipt {
       status: ReceiptStatusParsing.fromString(map["status"] ?? "sent"),
       time: (map["time"] is DateTime
           ? map["time"]
+          : map["time"] is Timestamp
+          ? (map["time"] as Timestamp).toDate()
           : DateTime.parse(map["time"]!)),
     );
     receipt._id = map["id"];

@@ -16,6 +16,7 @@ class MessageTable {
   static const String colCreatedAt = "created_at";
   static const String colSender = 'sender';
   static const String colContents = 'contents';
+  static const String colServerId = 'server_id';
   static const String colReceipt = 'receipt';
 }
 
@@ -26,5 +27,5 @@ class UserTable {
   static const String colEmail = "email";
   static const String colName = "name";
   static const String photoUrl = "photo_url";
-  static const String privateKeyJwb = "private_key_jwb";
+  static const String publicKeyJwb = "public_key_jwb";
 }

@@ -36,10 +36,11 @@ class TypingNotification implements ITypingNotification {
           event.docChanges.forEach((element) {
             switch (element.type) {
               case DocumentChangeType.added:
-                if (element.doc.data() == null) {
+                final data = element.doc.data();
+                if (data == null) {
                   return;
                 }
-                final event = TypingEvent.fromJSON(element.doc.data()!);
+                final event = _mapIdToTypingEvent(element.doc.id, data);
                 _removingEvent(event);
                 _controller.sink.add(event);
               default:
@@ -54,11 +55,11 @@ class TypingNotification implements ITypingNotification {
     return _controller.stream;
   }
 
-  _removingEvent(TypingEvent event) {
+  void _removingEvent(TypingEvent event) {
     _firebaseFirestore.collection("typing_events").doc(event.id).delete();
   }
 
-  TypingEvent _mapIdToTypingEvent(String id, TypingEvent event) {
-    return TypingEvent.fromJSON({"id": id, ...event.toJSON()});
+  TypingEvent _mapIdToTypingEvent(String id, Map<String, dynamic> event) {
+    return TypingEvent.fromJSON({"id": id, ...event});
   }
 }

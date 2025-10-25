@@ -7,7 +7,7 @@ class Message {
   final String to;
   String contents;
   final DateTime time;
-  IV? iv;
+  final IV? iv;
   String? _id;
 
   Message({

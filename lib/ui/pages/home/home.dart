@@ -19,8 +19,8 @@ import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 class Home extends StatefulWidget {
   final User me;
   final IHomeRouter router;
-  final EncryptionViewmodel _encryptionViewModel;
-  const Home(this.me, this.router, this._encryptionViewModel, {super.key});
+  final EncryptionViewmodel encryption;
+  const Home(this.me, this.router, this.encryption, {super.key});
   @override
   State<Home> createState() => _HomeState();
 }
@@ -48,7 +48,7 @@ class _HomeState extends State<Home>
     await context.read<ChatsCubit>().chats();
     context.read<HomeCubit>().activeUsers(widget.me);
     //! Spawn isolates
-    await widget._encryptionViewModel.preCacheKeys();
+    await widget.encryption.preCacheKeys();
     //! me should be user from above comment
     context.read<MessageBloc>().add(MessageEvent.subscribed(widget.me));
     _updateChatsOnMessageReceived();
@@ -114,18 +114,18 @@ class _HomeState extends State<Home>
         backgroundColor: kBackgroundColor,
         body: SafeArea(
           //TODO: Impl do not build app bar and searchbar as it is costly
-          child: BlocBuilder<ChatsCubit, List<Chat>>(builder: (context, chats) {
-            this.chats = chats;
-            if (this.chats.isEmpty) return _buildHome();
-
+          child:
+              BlocConsumer<ChatsCubit, List<Chat>>(listener: (context, chats) {
             context.read<TypingNotifBloc>().add(TypingNotifEvent.subscribed(
                   widget.me,
                   userWithChats: chats
-                      .map((chat) => chat.from?.id)
+                      .map((chat) => chat.from.id)
                       .whereType<
                           String>() //? Returns itearable of type string not string? which removes null
                       .toList(),
                 ));
+          }, builder: (context, chats) {
+            this.chats = chats;
             return _buildHome();
           }),
         ));
@@ -208,8 +208,8 @@ class _HomeState extends State<Home>
                       ),
                     ],
                   ),
-                  onPressed: () =>
-                      widget.router.onShowNewChatUi(context, widget.me),
+                  onPressed: () => widget.router
+                      .onShowNewChatUi(context, widget.me, widget.encryption),
                 ),
               ],
             ),
@@ -248,7 +248,7 @@ class _HomeState extends State<Home>
       tileColor: kBackgroundColor,
       splashColor: kSexyTealColor.withValues(alpha: 0.2),
       leading: Hero(
-        tag: chat.id ?? '_',
+        tag: chat.id,
         child: CircleAvatar(
           backgroundImage: NetworkImage(chat.from?.photoUrl ??
               'https://www.shutterstock.com/image-photo/red-text-any-questions-paper-600nw-2312396111.jpg'),
@@ -288,7 +288,7 @@ class _HomeState extends State<Home>
       ),
       onTap: () async {
         await this.widget.router.onShowMessageThread(
-            context, chat.from, widget.me,
+            context, chat.from, widget.me, widget.encryption,
             chatId: chat.id);
       },
       enabled: true,

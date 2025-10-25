@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:chat/chat.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
@@ -7,7 +8,7 @@ import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/message_thread/message_thread_cubit.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
-import 'package:secuchat/ui/pages/chatPage/message_thread/components/mesure_size.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_pill.dart';
 import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_text_field.dart';
 import 'package:secuchat/unit_components.dart';
@@ -20,10 +21,11 @@ class MessageThread extends StatefulWidget {
   final MessageBloc messageBloc;
   final TypingNotifBloc typingNotifBloc;
   final ChatsCubit chatsCubit;
+  final EncryptionViewmodel encryption;
   static final GlobalKey<_MessageThreadState> globalKey = GlobalKey();
 
   const MessageThread(this.receiver, this.me, this.messageBloc, this.chatsCubit,
-      this.typingNotifBloc,
+      this.typingNotifBloc, this.encryption,
       {super.key, this.chatId = ''});
 
   // bool chatExists;
@@ -54,13 +56,12 @@ class _MessageThreadState extends State<MessageThread> {
   late User receiver = widget.receiver;
   late final StreamSubscription subscription;
   bool initialScrollDone = false;
-  // Uint8List? _iv;
 
-  // final GlobalKey stickeyKey = GlobalKey();
   @override
   void initState() {
     // WidgetsBinding.instance.addObserver(this);
     context.read<ReceiptBloc>().add(ReceiptEvent.onSubscribed(widget.me));
+
     receiver.id != null
         ? context.read<TypingNotifBloc>().add(TypingNotifEvent.subscribed(
             widget.me,
@@ -90,6 +91,10 @@ class _MessageThreadState extends State<MessageThread> {
     return Scaffold(
       backgroundColor: kBackgroundColor,
       appBar: AppBar(
+        elevation: 0.0,
+        scrolledUnderElevation: 0.0,
+
+        forceMaterialTransparency: true,
         leading: IconButton(
             icon: const Icon(
               Icons.arrow_back_ios_new,
@@ -142,6 +147,7 @@ class _MessageThreadState extends State<MessageThread> {
                 child: ChatTextField(
                   key: _textBoxChangeKey,
                   textEditingController: _textEditingController,
+                  onChanged: _sendTypingNotification,
                   onSendButtonPressed: (String contents) async {
                     _sendMessage();
                   },
@@ -163,31 +169,36 @@ class _MessageThreadState extends State<MessageThread> {
           //     (previousMessageStore?.senderEmail ??
           //         ''); //? for some weird reason when previousMessageStore is null it actually returns true
           final message = messages[index];
+          var isMe = _isMe(message.message.from, widget.me.id!);
+          if (!isMe && message.receipt.status != ReceiptStatus.read) {
+            _sendReceipt(message);
+          }
           return ChatPill(
             text: message.message.contents,
             receiptStatus: message.receipt.status,
             isLastMessage:
                 index == 0, //? Listview is reverse so 0 index = last at screen
-            isMe: _isMe(message.message.from, widget.me.id!),
+            isMe: isMe,
             noMaginRequired: true,
           );
         },
         itemCount: messages.length,
       );
 
-  void _sendMessage() {
+  void _sendMessage() async {
     final text = _textEditingController.text.trim();
     if (text.isNotEmpty) {
+      final iv = IV.fromSecureRandom(16);
       final Message message = Message(
           from: widget.me.id!,
           to: widget.receiver.id!,
           contents: text,
-          time: DateTime.now());
+          time: DateTime.now(),
+          iv: iv);
 
       widget.messageBloc.add(MessageEvent.onMessageSent(message));
 
       _textEditingController.clear();
-      _startTypingTimer?.cancel();
       _startTypingTimer?.cancel();
     }
   }
@@ -195,7 +206,7 @@ class _MessageThreadState extends State<MessageThread> {
   void _sendReceipt(LocalMessage message) async {
     if (message.receipt.status == ReceiptStatus.read) return;
     final receipt = Receipt(
-      messageId: message.id,
+      messageId: message.message.id!,
       recipientId: message.message.to,
       status: ReceiptStatus.read,
       time: DateTime.now(),
@@ -215,10 +226,10 @@ class _MessageThreadState extends State<MessageThread> {
     if (_stopTypingTimer?.isActive ?? false) _stopTypingTimer!.cancel();
 
     _dispatchTypingEvent(Typing.start);
-    _startTypingTimer = Timer(Duration(seconds: 5), () {});
+    _startTypingTimer = Timer(Duration(seconds: 3), () {});
 
     _stopTypingTimer =
-        Timer(Duration(seconds: 6), () => _dispatchTypingEvent(Typing.stop));
+        Timer(Duration(seconds: 4), () => _dispatchTypingEvent(Typing.stop));
   }
 
   void _dispatchTypingEvent(Typing typing) {
@@ -227,8 +238,8 @@ class _MessageThreadState extends State<MessageThread> {
     widget.typingNotifBloc.add(TypingNotifEvent.sent(typingEvent));
   }
 
-  bool _isMe(String sender, String signedInUserEmail) {
-    bool isMe = sender == signedInUserEmail ? true : false;
+  bool _isMe(String sender, String myId) {
+    bool isMe = sender == myId ? true : false;
     return isMe;
   }
 
@@ -255,8 +266,7 @@ class _MessageThreadState extends State<MessageThread> {
         if (chatId.isEmpty) {
           chatId = messageThreadCubit.chatViewModel.chatId ??
               messageThreadCubit.chatViewModel.chats
-                  .where((chat) => chat.userId == state.message.to)
-                  .first
+                  .firstWhere((chat) => chat.userId == state.message.to)
                   .id;
         }
       }

@@ -1,4 +1,5 @@
 import 'package:chat/chat.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 final Map<String, dynamic> userMap = {
   "name": "Dabua",
@@ -23,7 +24,7 @@ final Map<String, dynamic> messageMapFromServer = {
   "from": "2edwd",
   "to": userMap["id"],
   "contents": "Hey Baby!",
-  "time": DateTime.now(),
+  "time": Timestamp.now(),
 };
 
 final Map<String, dynamic> receiptMap = {
@@ -31,7 +32,7 @@ final Map<String, dynamic> receiptMap = {
   "recipient_id": userMap["id"],
   "id": "sdsdsdwdwdwd",
   "status": "sent",
-  "time": DateTime.now(),
+  "time": Timestamp.now(),
 };
 
 final Map<String, dynamic> typingEventMap = {

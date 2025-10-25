@@ -8,11 +8,13 @@ import 'package:secuchat/state_management/home/home_state.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/ui/widgets/app_back_button.dart';
 import 'package:secuchat/unit_components.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 class NewChat extends StatefulWidget {
   final User me;
   final IHomeRouter homeRouter;
-  const NewChat(this.me, this.homeRouter, {super.key});
+  final EncryptionViewmodel encryption;
+  const NewChat(this.me, this.homeRouter, this.encryption, {super.key});
 
   @override
   State<NewChat> createState() => _NewChatState();
@@ -76,7 +78,7 @@ class _NewChatState extends State<NewChat> {
         style: const TextStyle(color: Colors.white70),
       ),
       onTap: () => widget.homeRouter.onShowMessageThread(
-          context, user, widget.me,
+          context, user, widget.me, widget.encryption,
           chatId: _chatChatExists(user.id!)),
       enabled: true,
       enableFeedback: true,

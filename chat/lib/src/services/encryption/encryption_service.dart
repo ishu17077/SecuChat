@@ -27,8 +27,8 @@ final class EncryptionService implements IEncryption {
       );
       return utf8.decode(decryptedMessage.codeUnits);
     } catch (e) {
-      debugPrint("Error: Cannot decrypt message");
-      throw DecryptionException(e.toString());
+      debugPrint("Error: Cannot decrypt message $e");
+      return "This text cannot be decrypted";
     }
   }
 

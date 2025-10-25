@@ -2,14 +2,14 @@ import 'package:chat/chat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
-import 'package:webcrypto/webcrypto.dart';
+import 'package:secuchat/viewmodels/encryption/helpers/encryption_key.dart';
 
 class EncryptionViewmodel {
   final IEncryption encryption;
   final IUserService _userService;
   final IDataSource _dataSource;
   final ILocalCache _localCache;
-  final List<EncrytionKey> keys = List.empty(growable: true);
+  final List<EncryptionKey> keys = List.empty(growable: true);
 
   String? _privatKey;
   String? publicKey;
@@ -42,10 +42,9 @@ class EncryptionViewmodel {
           chatsBatch.map((chat) => _userService.fetchUserId(chat.userId));
       final users = await Future.wait(futureUsers);
       for (final user in users) {
-        
         if (user != null && !keys.any((key) => key.userId == user.id)) {
           try {
-            final encryptionKey = EncrytionKey(
+            final encryptionKey = EncryptionKey(
                 user.id!,
                 await encryption.deriveKey(JsonWebKeyPair(
                     privateKey: _privatKey!, publicKey: user.publicKeyJwb!)));
@@ -62,7 +61,7 @@ class EncryptionViewmodel {
     }
   }
 
-  Future<EncrytionKey?> getChatAcmKey(String userId) async {
+  Future<EncryptionKey?> getChatAcmKey(String userId) async {
     _privatKey ??= await _localCache.encryptGet('PRIVATE_KEY');
     for (final key in keys) {
       if (key.userId == userId) return key;
@@ -74,7 +73,7 @@ class EncryptionViewmodel {
       } else {
         _checkKeyUpdatesInBackground(userId, user);
       }
-      final encryptionKey = EncrytionKey(
+      final encryptionKey = EncryptionKey(
           userId,
           await encryption.deriveKey(JsonWebKeyPair(
               privateKey: _privatKey!, publicKey: user!.publicKeyJwb!)));
@@ -93,13 +92,4 @@ class EncryptionViewmodel {
           aesGcmKey;
     });
   }
-
-  
-}
-
-class EncrytionKey {
-  final String userId;
-  AesGcmSecretKey secretKey;
-
-  EncrytionKey(this.userId, this.secretKey);
 }

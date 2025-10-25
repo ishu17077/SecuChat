@@ -13,6 +13,8 @@ class ChatsViewModel extends BaseViewModel {
       : super(_dataSource, userService);
   Future<List<Chat>> getChats() async {
     if (chats.isEmpty) chats = await _dataSource.findAllChats();
+    //! Spawn isolates
+
     if (!usersChecked) {
       usersChecked = true;
       for (var chat in chats) {
@@ -43,6 +45,7 @@ class ChatsViewModel extends BaseViewModel {
             status: ReceiptStatus.delivered,
             time: DateTime.now()),
         userId: userId);
+
     await addMessage(localMessage);
   }
 }

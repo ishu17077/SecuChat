@@ -24,7 +24,8 @@ class LocalDatabaseFactory {
     }
     String databasePath = await getDatabasesPath();
     String dbPath = join(databasePath, "secuchat.db");
-    _database = await openDatabase(dbPath, onCreate: _populateDb);
+    _database = await openDatabase(dbPath,
+        onCreate: _populateDb, version: 3, onUpgrade: _upgradeDb);
     return _database!;
   }
 
@@ -33,6 +34,13 @@ class LocalDatabaseFactory {
     await _createMessageTable(db);
     await _createUserTable(db);
     await _createIndices(db);
+  }
+
+  Future<void> _upgradeDb(Database db, int oldVer, int newVer) async {
+    if (oldVer == 2 && newVer == 3) {
+      await db.execute(
+          """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colServerId} TEXT""");
+    }
   }
 
   Future<void> _createChatTable(Database db) async {
@@ -57,6 +65,7 @@ class LocalDatabaseFactory {
     ${MessageTable.colRecipient} TEXT,
     ${MessageTable.colReceipt} TEXT NOT NULL,
     ${MessageTable.colContents} TEXT NOT NULL,
+    ${MessageTable.colServerId} TEXT,
     ${MessageTable.colCreatedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     ${MessageTable.colExecutedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
     )""").then((_) {
@@ -73,7 +82,7 @@ class LocalDatabaseFactory {
       ${UserTable.colName} VARCHAR(255) NOT NULL,
       ${UserTable.colUsername} VARCHAR(255) NOT NULL,
       ${UserTable.photoUrl} TEXT,
-      ${UserTable.privateKeyJwb} TEXT NOT NULL,
+      ${UserTable.publicKeyJwb} TEXT NOT NULL
     )""").then((_) {
       debugPrint("Successfully created ${UserTable.tableName} table");
     }).catchError((error) {
@@ -83,12 +92,16 @@ class LocalDatabaseFactory {
 
   Future<void> _createIndices(Database db) async {
     final batch = db.batch();
-    batch.execute(
-        "CREATE UNIQUE INDEX user_identify ON ${UserTable.tableName} (${UserTable.colId} , ${UserTable.colEmail}, ${UserTable.colUsername})");
-    batch.execute(
-        "CREATE UNIQUE INDEX chat_identify ON ${ChatTable.tableName} (${ChatTable.colId}, ${ChatTable.colUserId}, ${ChatTable.colGroupId})");
-    batch.execute(
-        "CREATE INDEX messages_index ON ${MessageTable.tableName} (${MessageTable.colChatId}, ${MessageTable.colExecutedAt}, ${MessageTable.colCreatedAt}, ${MessageTable.colReceipt})");
-    await batch.commit();
+    try {
+      batch.execute(
+          "CREATE UNIQUE INDEX user_identify ON ${UserTable.tableName} (${UserTable.colId} , ${UserTable.colEmail}, ${UserTable.colUsername})");
+      batch.execute(
+          "CREATE UNIQUE INDEX chat_identify ON ${ChatTable.tableName} (${ChatTable.colId}, ${ChatTable.colUserId}, ${ChatTable.colGroupId})");
+      batch.execute(
+          "CREATE INDEX messages_index ON ${MessageTable.tableName} (${MessageTable.colChatId}, ${MessageTable.colExecutedAt} DESC, ${MessageTable.colCreatedAt} DESC, ${MessageTable.colReceipt})");
+      await batch.commit();
+    } catch (e) {
+      debugPrint("Indices creation failed");
+    }
   }
 }

@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 class ChatTextField extends StatefulWidget {
   final Function onSendButtonPressed;
   final TextEditingController textEditingController;
+  void Function(String text) onChanged;
   ChatTextField(
       {super.key,
+      required this.onChanged,
       required this.onSendButtonPressed,
       required this.textEditingController});
 
@@ -19,6 +21,7 @@ class _ChatTextFieldState extends State<ChatTextField> {
       widget.textEditingController;
   bool shouldKeyBoardAppear = false;
   String? contents;
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -56,6 +59,7 @@ class _ChatTextFieldState extends State<ChatTextField> {
             readOnly: !shouldKeyBoardAppear,
             controller: _textEditingController,
             minLines: 1,
+            onChanged: widget.onChanged,
             showCursor: true,
             autofocus: true,
             maxLines: 5,
