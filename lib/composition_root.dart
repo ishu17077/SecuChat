@@ -2,6 +2,8 @@ import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
@@ -68,18 +70,18 @@ class CompositionRoot {
     _typingNotification = TypingNotification(_firebaseFirestore);
     _receiptService = ReceiptService(_firebaseFirestore);
     _dataSource = SqfliteDatasource(_db);
-    final _encryptedSharedPref = EncryptedSharedPreferences(
+    final encryptedSharedPref = EncryptedSharedPreferences(
         prefs: await SharedPreferences.getInstance(),
         mode: AESMode.gcm,
         randomKeyKey: 'Color#E2330');
-    _localCache = LocalCache(_encryptedSharedPref);
+    _localCache = LocalCache(encryptedSharedPref);
     _encryptionViewmodel = EncryptionViewmodel(
         _encryption, _dataSource, _localCache, _userService);
-
     _messageBloc = MessageBloc(_messageService, _encryptionViewmodel);
     _typingNotifBloc = TypingNotifBloc(_typingNotification);
     _receiptBloc = ReceiptBloc(_receiptService);
-    final viewModel = ChatsViewModel(_dataSource, userService: _userService);
+    final viewModel = ChatsViewModel(_dataSource,
+        userService: _userService, encryption: _encryptionViewmodel);
     _chatsCubit = ChatsCubit(viewModel);
     _homeCubit = HomeCubit(_userService, _localCache);
 
@@ -125,7 +127,7 @@ class CompositionRoot {
         BlocProvider.value(value: _typingNotifBloc),
       ],
       child: MessageThread(
-          receiver, me, _messageBloc, _chatsCubit, _typingNotifBloc, encryption,
+          receiver, me, _messageBloc, _chatsCubit, _typingNotifBloc,
           chatId: chatId ?? ''),
     );
   }

@@ -8,7 +8,6 @@ import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/message_thread/message_thread_cubit.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
-import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_pill.dart';
 import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_text_field.dart';
 import 'package:secuchat/unit_components.dart';
@@ -21,24 +20,9 @@ class MessageThread extends StatefulWidget {
   final MessageBloc messageBloc;
   final TypingNotifBloc typingNotifBloc;
   final ChatsCubit chatsCubit;
-  final EncryptionViewmodel encryption;
-  static final GlobalKey<_MessageThreadState> globalKey = GlobalKey();
-
   const MessageThread(this.receiver, this.me, this.messageBloc, this.chatsCubit,
-      this.typingNotifBloc, this.encryption,
+      this.typingNotifBloc,
       {super.key, this.chatId = ''});
-
-  // bool chatExists;
-  //TODO: Impl
-  // Map<String, List<int>> derivedKey;
-
-  // MessageThread({
-  //   this.chatExists = true,
-  //   required this.chatStore,
-  //   required this.derivedKey,
-  //   required this.updateChatsView,
-  // }) : super(key: globalKey);
-
   @override
   State<MessageThread> createState() => _MessageThreadState();
 }
@@ -179,7 +163,9 @@ class _MessageThreadState extends State<MessageThread> {
             isLastMessage:
                 index == 0, //? Listview is reverse so 0 index = last at screen
             isMe: isMe,
-            noMaginRequired: true,
+            noMaginRequired: index != 0
+                ? message.message.from == messages[index - 1].message.from
+                : true,
           );
         },
         itemCount: messages.length,

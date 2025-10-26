@@ -115,20 +115,22 @@ class SqfliteDatasource implements IDataSource {
         whereArgs: [chatId],
       );
       final chat = Chat.fromJSON(listOfChatMaps.first);
-      final userMap = (await txn.query(
-        UserTable.tableName,
-        where: "${UserTable.colId} = ?",
-        whereArgs: [listOfChatMaps.first["user_id"]],
-        limit: 1,
-      ))
-          .first;
+      if (listOfChatMaps.first['user_id'] != null) {
+        final userMap = (await txn.query(
+          UserTable.tableName,
+          where: "${UserTable.colId} = ?",
+          whereArgs: [listOfChatMaps.first["user_id"]!],
+          limit: 1,
+        ))
+            .first;
+        User user = User.fromJSON(userMap);
+        chat.from = user;
+        chat.unread = unread ?? 0;
+        chat.mostRecent = mostRecentMessage.isNotEmpty
+            ? LocalMessage.fromJSON(mostRecentMessage.first)
+            : null;
+      }
 
-      User user = User.fromJSON(userMap);
-      chat.from = user;
-      chat.unread = unread ?? 0;
-      chat.mostRecent = mostRecentMessage.isNotEmpty
-          ? LocalMessage.fromJSON(mostRecentMessage.first)
-          : null;
       return chat;
     });
   }
@@ -139,7 +141,7 @@ class SqfliteDatasource implements IDataSource {
       final messages = await txn.query(
         MessageTable.tableName,
         where: "${MessageTable.colChatId} = ?",
-        orderBy: "${MessageTable.colExecutedAt} DESC",
+        orderBy: "${MessageTable.colCreatedAt} DESC",
         whereArgs: [chatId],
       );
 
@@ -159,7 +161,7 @@ class SqfliteDatasource implements IDataSource {
   Future<void> updateMessageReceipt(
       String messageId, ReceiptStatus status) async {
     await _db.update(MessageTable.tableName, {"receipt": status.value()},
-        where: "${MessageTable.colId} = ?",
+        where: "${MessageTable.colServerId} = ?",
         whereArgs: [messageId],
         conflictAlgorithm: ConflictAlgorithm.replace);
   }

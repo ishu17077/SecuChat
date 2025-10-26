@@ -3,13 +3,16 @@ import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
+import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
 class ChatsViewModel extends BaseViewModel {
   final IDataSource _dataSource;
   final IUserService userService;
+  final EncryptionViewmodel encryption;
   bool usersChecked = false;
 
-  ChatsViewModel(this._dataSource, {required this.userService})
+  ChatsViewModel(this._dataSource,
+      {required this.userService, required this.encryption})
       : super(_dataSource, userService);
   Future<List<Chat>> getChats() async {
     if (chats.isEmpty) chats = await _dataSource.findAllChats();

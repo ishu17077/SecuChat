@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:chat/src/models/message.dart';
 import 'package:chat/src/models/user.dart';
-import 'package:chat/src/services/encryption/encryption_contract.dart';
 import 'package:chat/src/services/message/message_service_contract.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:encrypt/encrypt.dart';
 import 'package:flutter/foundation.dart';
 
 class MessageService implements IMessageService {
@@ -70,13 +68,6 @@ class MessageService implements IMessageService {
     });
   }
 
-  Message _messageFromFeed(Map<String, dynamic> messageMap) {
-    //TODO: impl of asymmetric encryption
-    // messageMap["contents"] = _encryption.decrypt((messageMap["contents"]));
-
-    final Message message = Message.fromJSON(messageMap);
-    return message;
-  }
 
   void _removeDeliveredMessage(Message message) {
     _firestore.collection("messages").doc(message.id).delete();

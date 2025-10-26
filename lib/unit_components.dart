@@ -22,3 +22,15 @@ const String fCMTokenRegisteredName = 'FCM_Token';
 final Future<Directory> directory = getApplicationDocumentsDirectory();
 final GlobalKey<NavigatorState> navigatorKey =
     GlobalKey(debugLabel: "Main Navigator");
+const MaterialColor greenAndroid = MaterialColor(0xff3ddc84, <int, Color>{
+  50: Color(0xff37c677),
+  100: Color(0xff31b06a),
+  200: Color(0xff2b9a5c),
+  300: Color(0xff25844f),
+  400: Color(0xff1f6e42),
+  500: Color(0xff185835),
+  600: Color(0xff124228),
+  700: Color(0xff0c2c1a),
+  800: Color(0xff06160d),
+  900: Color(0xff000000),
+});

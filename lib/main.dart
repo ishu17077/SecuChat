@@ -6,23 +6,11 @@ import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // FlutterLocalNotificationsPlugin localNotificationsPlugin =
-  //     await FlutterLocalNotificationsPlugin();
-  // localNotificationsPlugin.cancelAll();
-  // await Firebase.initializeApp();
-  // if (user != null) {
-  //   await FirebaseApi().initNotifications();
-  // } //? initialize notification for them
-  try {
-    FlutterDisplayMode.setHighRefreshRate();
-  } catch (e) {
-    debugPrint(e.toString());
-  }
-
   await SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   await CompositionRoot.configure();
   runApp(const MyApp());
+  FlutterDisplayMode.setHighRefreshRate();
 }
 
 class MyApp extends StatelessWidget {

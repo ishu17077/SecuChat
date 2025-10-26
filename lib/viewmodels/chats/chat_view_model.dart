@@ -1,8 +1,10 @@
 import 'package:chat/chat.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
+import 'package:webcrypto/webcrypto.dart';
 
 class ChatViewModel extends BaseViewModel {
   String? chatId;
@@ -11,12 +13,11 @@ class ChatViewModel extends BaseViewModel {
   List<LocalMessage> messages = List.empty(growable: true);
   int otherMessages = 0;
 
-  ChatViewModel(
-    this._dataSource,
-    this._userService,
-  ) : super(_dataSource, _userService);
+  ChatViewModel(this._dataSource, this._userService)
+      : super(_dataSource, _userService);
 
   Future<List<LocalMessage>> getMessages(String chatId) async {
+    //! Cache Layer
     if (messages.isNotEmpty) {
       return messages;
     }
