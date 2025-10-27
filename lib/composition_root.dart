@@ -149,4 +149,8 @@ class CompositionRoot {
       BlocProvider.value(value: _homeCubit)
     ], child: NewChat(me, _homeRouter, encryption));
   }
+
+  static void composeNotifications(User me){
+    
+  }
 }

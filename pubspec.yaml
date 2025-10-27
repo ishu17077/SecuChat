@@ -59,6 +59,7 @@ dependencies:
   flutter_displaymode: ^0.7.0
   libsignal_protocol_dart: ^0.7.2
   flutter_secure_storage: ^9.2.4
+  awesome_notifications: ^0.10.1
 
 dev_dependencies:
   flutter_lints: ^6.0.0

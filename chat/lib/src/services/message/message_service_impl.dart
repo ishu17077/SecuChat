@@ -12,7 +12,6 @@ class MessageService implements IMessageService {
   final StreamController<Message> _controller =
       StreamController<Message>.broadcast();
   StreamSubscription? _changeFeed;
-  late final Random random = Random.secure();
 
   MessageService(this._firestore);
 
@@ -68,6 +67,20 @@ class MessageService implements IMessageService {
     });
   }
 
+  @override
+  Future<List<Message>> getMessages({required User activeUser}) async {
+    return await _getLatestMessages(activeUser);
+  }
+
+  Future<List<Message>> _getLatestMessages(User user) async {
+    final messageMaps = await _firestore
+        .collection("messages")
+        .where("to", isEqualTo: user.id!)
+        .get();
+    return messageMaps.docChanges.map((messageMap) {
+      return _mapIdToMessage(messageMap.doc.id, messageMap.doc.data()!);
+    }).toList();
+  }
 
   void _removeDeliveredMessage(Message message) {
     _firestore.collection("messages").doc(message.id).delete();
@@ -76,5 +89,4 @@ class MessageService implements IMessageService {
   Message _mapIdToMessage(String id, Map<String, dynamic> messageMap) {
     return Message.fromJSON({"id": id, ...messageMap});
   }
-
 }
