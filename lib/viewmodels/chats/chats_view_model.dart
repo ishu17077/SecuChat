@@ -39,12 +39,17 @@ class ChatsViewModel extends BaseViewModel {
     return chats;
   }
 
+  Future<void> forceRefresh() async {
+    final chats = await _dataSource.findAllChats();
+    if (chats.length != this.chats.length) this.chats = chats;
+  }
+
   Future<void> receivedMessage(String userId, Message message) async {
     LocalMessage localMessage = LocalMessage(
         message,
         Receipt(
-            messageId: '',
-            recipientId: '',
+            messageId: message.id ?? '',
+            recipientId: userId,
             status: ReceiptStatus.delivered,
             time: DateTime.now()),
         userId: userId);

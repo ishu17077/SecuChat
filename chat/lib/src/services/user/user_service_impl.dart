@@ -40,7 +40,7 @@ class UserService implements IUserService {
     final DocumentReference docRef = _firebaseFirestore
         .collection("users")
         .doc(user.id);
-
+    
     await docRef.update(userMap);
     _firebaseFirestore.terminate();
   }

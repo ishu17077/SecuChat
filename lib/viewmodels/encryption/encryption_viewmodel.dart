@@ -71,6 +71,7 @@ class EncryptionViewmodel {
       if (user == null) {
         user = await _userService.fetchUserId(userId);
       } else {
+        //TODO: Impl isolates
         _checkKeyUpdatesInBackground(userId, user);
       }
       final encryptionKey = EncryptionKey(

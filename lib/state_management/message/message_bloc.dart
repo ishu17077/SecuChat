@@ -50,4 +50,14 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
     _messageService.dispose();
     return super.close();
   }
+
+  Future<void> pause() async {
+    _messageService.pause();
+    // _subscription?.pause();
+  }
+
+  Future<void> resume() async {
+    _messageService.resume();
+    // _subscription?.resume();
+  }
 }

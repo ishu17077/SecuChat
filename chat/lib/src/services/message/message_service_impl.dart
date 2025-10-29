@@ -41,6 +41,7 @@ class MessageService implements IMessageService {
     _changeFeed = _firestore
         .collection("messages")
         .where("to", isEqualTo: user.id)
+        .orderBy('time', descending: false)
         .snapshots()
         .listen((QuerySnapshot<Map<String, dynamic>> snapshot) {
           snapshot.docChanges.forEach((element) async {
@@ -53,9 +54,8 @@ class MessageService implements IMessageService {
                   element.doc.id,
                   element.doc.data()!,
                 );
-
                 _controller.sink.add(message);
-                _removeDeliveredMessage(message);
+                _removeDeliveredMessage(message.id!);
               default:
             }
             return;
@@ -76,17 +76,29 @@ class MessageService implements IMessageService {
     final messageMaps = await _firestore
         .collection("messages")
         .where("to", isEqualTo: user.id!)
+        .orderBy('time', descending: false)
         .get();
-    return messageMaps.docChanges.map((messageMap) {
-      return _mapIdToMessage(messageMap.doc.id, messageMap.doc.data()!);
+    return messageMaps.docChanges.map((doc) {
+      _removeDeliveredMessage(doc.doc.id);
+      return _mapIdToMessage(doc.doc.id, doc.doc.data()!);
     }).toList();
   }
 
-  void _removeDeliveredMessage(Message message) {
-    _firestore.collection("messages").doc(message.id).delete();
+  void _removeDeliveredMessage(String id) {
+    _firestore.collection("messages").doc(id).delete();
   }
 
   Message _mapIdToMessage(String id, Map<String, dynamic> messageMap) {
     return Message.fromJSON({"id": id, ...messageMap});
+  }
+
+  @override
+  Future<void> pause() async {
+    _changeFeed?.pause();
+  }
+
+  @override
+  Future<void> resume() async {
+    _changeFeed?.resume();
   }
 }

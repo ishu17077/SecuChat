@@ -1,0 +1,11 @@
+import 'package:secuchat/models/chat.dart';
+import 'package:secuchat/models/local_message.dart';
+
+@pragma("vm:entry-point")
+abstract class INotificationService {
+  Future<void> initialize();
+  Future<void> createTempNotif(int id);
+  Future<void> createNotification(Chat chat, LocalMessage message);
+  Future<void> cancel(int id);
+  Future<void> cancelAll();
+}

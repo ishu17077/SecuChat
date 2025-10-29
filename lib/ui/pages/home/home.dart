@@ -61,28 +61,27 @@ class _HomeState extends State<Home>
     switch (state) {
       case AppLifecycleState.resumed:
         print('AppCycleState resumed');
-        // _chatStream?.resume();
-        // _chatStream?.resume();
-        // _chatStream?.resume();
-        // _chatStream?.resume();
-        // _chatStream?.resume();
-        // _chatStream?.resume();
-        // updateListView();
+        context.read<MessageBloc>().resume();
+        await context.read<ChatsCubit>().chats(forceRefresh: true);
 
         break;
       case AppLifecycleState.inactive:
+        context.read<MessageBloc>().pause();
         print('AppCycleState inactive');
 
         break;
       case AppLifecycleState.paused:
+        context.read<MessageBloc>().pause();
         print('AppCycleState paused');
         // _chatStream?.pause();
         break;
       case AppLifecycleState.detached:
+        context.read<MessageBloc>().pause();
         print('AppCycleState detached');
         // _chatStream?.pause();
         break;
       case AppLifecycleState.hidden:
+        context.read<MessageBloc>().pause();
         print('AppCycleState hidden');
         // _chatStream?.pause();
         // _chatStream?.pause();

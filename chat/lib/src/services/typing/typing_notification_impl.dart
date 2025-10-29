@@ -7,7 +7,7 @@ class TypingNotification implements ITypingNotification {
   final FirebaseFirestore _firebaseFirestore;
   final StreamController<TypingEvent> _controller =
       StreamController<TypingEvent>.broadcast();
-  late StreamSubscription? _changeFeed;
+  StreamSubscription? _changeFeed;
 
   TypingNotification(this._firebaseFirestore);
 
@@ -31,6 +31,7 @@ class TypingNotification implements ITypingNotification {
         .collection("typing_events")
         .where("from", arrayContains: userIds)
         .where("to", isEqualTo: user.id)
+        .orderBy('time', descending: false)
         .snapshots()
         .listen((event) {
           event.docChanges.forEach((element) {
@@ -50,7 +51,7 @@ class TypingNotification implements ITypingNotification {
         });
 
     _changeFeed?.onError((error) {
-      debugPrint(error);
+      debugPrint(error.toString());
     });
     return _controller.stream;
   }

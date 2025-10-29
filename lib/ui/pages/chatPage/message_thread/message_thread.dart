@@ -27,7 +27,8 @@ class MessageThread extends StatefulWidget {
   State<MessageThread> createState() => _MessageThreadState();
 }
 
-class _MessageThreadState extends State<MessageThread> {
+class _MessageThreadState extends State<MessageThread>
+    with WidgetsBindingObserver {
   late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
@@ -43,7 +44,7 @@ class _MessageThreadState extends State<MessageThread> {
 
   @override
   void initState() {
-    // WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     context.read<ReceiptBloc>().add(ReceiptEvent.onSubscribed(widget.me));
 
     receiver.id != null
@@ -68,6 +69,36 @@ class _MessageThreadState extends State<MessageThread> {
     _textEditingController
         .removeListener(() => _textEditingController.dispose());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (chatId.isNotEmpty) {
+          await context
+              .read<MessageThreadCubit>()
+              .messages(chatId, forceRefresh: true);
+        }
+        break;
+      case AppLifecycleState.inactive:
+        print('AppCycleState inactive');
+
+        break;
+      case AppLifecycleState.paused:
+        print('AppCycleState paused');
+        // _chatStream?.pause();
+        break;
+      case AppLifecycleState.detached:
+        print('AppCycleState detached');
+        // _chatStream?.pause();
+        break;
+      case AppLifecycleState.hidden:
+        print('AppCycleState hidden');
+        // _chatStream?.pause();
+        // _chatStream?.pause();
+        break;
+    }
   }
 
   @override
@@ -96,7 +127,6 @@ class _MessageThreadState extends State<MessageThread> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            // ignore: prefer_const_constructors
             Hero(
               tag: chatId.isEmpty ? '_' : chatId,
               child: CircleAvatar(

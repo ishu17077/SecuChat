@@ -49,6 +49,7 @@ app.*.map.json
 /android/wrapper/
 **/node_modules/
 
+/secuchat
 /cloud_messaging/
 /local.properties
 # Ignore Gradle project-specific cache directory

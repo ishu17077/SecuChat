@@ -1,7 +1,10 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -9,6 +12,11 @@ import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/data/datasources/sqflite_datasource_impl.dart';
 import 'package:secuchat/data/factories/db_factory_impl.dart';
+import 'package:secuchat/models/chat.dart';
+import 'package:secuchat/models/local_message.dart';
+import 'package:secuchat/notification_service/awesome_notification_impl.dart';
+import 'package:secuchat/notification_service/firebase_api.dart';
+import 'package:secuchat/notification_service/notification_service_contract.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/home/home_cubit.dart';
 import 'package:secuchat/state_management/message/message_bloc.dart';
@@ -55,8 +63,10 @@ class CompositionRoot {
   static late AuthViewModel _authViewModel;
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
+  static late INotificationService _notificationService;
   static late HomeRouter _homeRouter;
   static late EncryptionViewmodel _encryptionViewmodel;
+  static late FirebaseNotifications _firebaseNotifications;
 
   static Future<void> configure() async {
     await Firebase.initializeApp();
@@ -91,17 +101,19 @@ class CompositionRoot {
         _userService, _localCache, _encryptionViewmodel);
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
+    final awesomeNotifications = AwesomeNotifications();
+    _notificationService = AwesomeNotificationService(awesomeNotifications);
 
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
   }
 
   static Widget start() {
     final user = _authViewModel.signedInUser;
+    if (user != null) startNotificationService(user);
     return user != null ? composeHomeUi(user) : composeOnboardingUi();
   }
 
   static Widget composeHomeUi(User me) {
-    //TODO: Final Impl
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => _chatsCubit),
@@ -150,7 +162,70 @@ class CompositionRoot {
     ], child: NewChat(me, _homeRouter, encryption));
   }
 
-  static void composeNotifications(User me){
-    
+  static void startNotificationService(User me) async {
+    final _firebaseMessaging = FirebaseMessaging.instance;
+    _firebaseNotifications = FirebaseNotifications(
+        _firebaseMessaging,
+        me,
+        _dataSource,
+        _messageService,
+        _encryptionViewmodel,
+        _userService,
+        _localCache,
+        _receiptService,
+        _notificationService);
+    await _firebaseNotifications.initNotifications();
+    // await _notificationService.createTempNotif(999);
   }
+
+  // static Widget composeNotifications() {
+  //   final INotificationService notificationService =
+  //       AwesomeNotificationService(AwesomeNotifications());
+
+  //   //!Test
+
+  //   final Message message = Message(
+  //     from: "2edwd",
+  //     to: "dasdsd",
+  //     contents: "Hey Baby!",
+  //     time: DateTime.now(),
+  //   );
+  //   final Map<String, dynamic> receiptMap = {
+  //     "message_id": "dwdwd",
+  //     "recipient_id": '2ewd',
+  //     "id": "sdsdsdwdwdwd",
+  //     "status": "sent",
+  //     "time": Timestamp.now(),
+  //   };
+  //   LocalMessage localMessage =
+  //       LocalMessage(message, Receipt.fromJSON(receiptMap), userId: '1');
+  //   localMessage.chatId = '1';
+  //   Chat chat = Chat('1');
+  //   chat.from = User(
+  //       name: 'wdld',
+  //       email: 'sddwsd',
+  //       username: 'username',
+  //       lastSeen: DateTime.now(),
+  //       publicKeyJwb: 'sdsddd');
+
+  //   chat.messages = [localMessage];
+  //   chat.mostRecent = localMessage;
+
+  //   return Scaffold(
+  //     backgroundColor: Colors.white,
+  //     body: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         ElevatedButton(
+  //             onPressed: () async {
+  //               await notificationService.initialize();
+  //               await notificationService.createNotification(
+  //                   chat, localMessage);
+  //             },
+  //             child: Text("Show notif"))
+  //       ],
+  //     ),
+  //   );
+  // }
 }
