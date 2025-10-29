@@ -36,8 +36,11 @@ void main() {
     });
     when(collectionRef.doc(any)).thenReturn(docRef);
     when(
-      collectionRef.orderBy(any, descending: anyNamed('decending')),
-    ).thenReturn(collectionRef);
+      collectionRef.orderBy(any, descending: anyNamed('descending')),
+    ).thenReturn(query);
+     when(
+      query.orderBy(any, descending: anyNamed('descending')),
+    ).thenReturn(query);
     when(
       collectionRef.where(any, isEqualTo: anyNamed("isEqualTo")),
     ).thenReturn(query);
