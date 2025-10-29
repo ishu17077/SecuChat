@@ -33,6 +33,9 @@ void main() {
     ).thenAnswer((realInvocation) async => docRef);
 
     when(collectionReference.doc(any)).thenReturn(docRef);
+     when(
+      collectionReference.orderBy(any, descending: anyNamed('decending')),
+    ).thenReturn(collectionReference);
     when(
       collectionReference.where(
         "from",

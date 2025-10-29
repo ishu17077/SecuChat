@@ -30,10 +30,14 @@ void main() {
     documentSnapshot = MockQueryDocumentSnapshot();
     messageService = MessageService(firebaseFirestore);
     when(firebaseFirestore.collection("messages")).thenReturn(collectionRef);
+
     when(query.snapshots()).thenAnswer((realInvocation) {
       return Stream.value(querySnapshot);
     });
     when(collectionRef.doc(any)).thenReturn(docRef);
+    when(
+      collectionRef.orderBy(any, descending: anyNamed('decending')),
+    ).thenReturn(collectionRef);
     when(
       collectionRef.where(any, isEqualTo: anyNamed("isEqualTo")),
     ).thenReturn(query);
