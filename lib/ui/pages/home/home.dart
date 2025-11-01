@@ -46,11 +46,13 @@ class _HomeState extends State<Home>
     final user =
         (!_user.active) ? await context.read<HomeCubit>().connect() : _user;
     await context.read<ChatsCubit>().chats();
+
     context.read<HomeCubit>().activeUsers(widget.me);
     //! Spawn isolates
     await widget.encryption.preCacheKeys();
     //! me should be user from above comment
     context.read<MessageBloc>().add(MessageEvent.subscribed(widget.me));
+    context.read<MessageBloc>().resume();
     _updateChatsOnMessageReceived();
   }
 
@@ -63,25 +65,23 @@ class _HomeState extends State<Home>
         print('AppCycleState resumed');
         context.read<MessageBloc>().resume();
         await context.read<ChatsCubit>().chats(forceRefresh: true);
-
         break;
       case AppLifecycleState.inactive:
-        context.read<MessageBloc>().pause();
         print('AppCycleState inactive');
 
         break;
       case AppLifecycleState.paused:
-        context.read<MessageBloc>().pause();
+       context.read<MessageBloc>().pause();
         print('AppCycleState paused');
         // _chatStream?.pause();
         break;
       case AppLifecycleState.detached:
-        context.read<MessageBloc>().pause();
+        // context.read<MessageBloc>().pause();
         print('AppCycleState detached');
         // _chatStream?.pause();
         break;
       case AppLifecycleState.hidden:
-        context.read<MessageBloc>().pause();
+        // context.read<MessageBloc>().pause();
         print('AppCycleState hidden');
         // _chatStream?.pause();
         // _chatStream?.pause();
@@ -92,7 +92,7 @@ class _HomeState extends State<Home>
   @override
   void dispose() {
     // _chatStream?.cancel();
-
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

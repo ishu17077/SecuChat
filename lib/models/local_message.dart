@@ -28,7 +28,8 @@ class LocalMessage {
     final Message message = Message.fromJSON({
       "id": messageMap[MessageTable.colServerId],
       "from": messageMap[MessageTable.colSender] ?? '',
-      "to": messageMap[MessageTable.colReceipt] ?? '',
+      "to": messageMap[MessageTable.colRecipient] ?? '',
+      "status": messageMap[MessageTable.colReceipt] ?? ReceiptStatus.sent,
       "contents": messageMap[MessageTable.colContents] ?? '',
       "time": messageMap["created_at"] != null
           ? DateTime.parse(messageMap["created_at"])

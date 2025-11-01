@@ -27,8 +27,7 @@ class MessageThread extends StatefulWidget {
   State<MessageThread> createState() => _MessageThreadState();
 }
 
-class _MessageThreadState extends State<MessageThread>
-    with WidgetsBindingObserver {
+class _MessageThreadState extends State<MessageThread> {
   late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
@@ -44,7 +43,7 @@ class _MessageThreadState extends State<MessageThread>
 
   @override
   void initState() {
-    WidgetsBinding.instance.addObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
     context.read<ReceiptBloc>().add(ReceiptEvent.onSubscribed(widget.me));
 
     receiver.id != null
@@ -68,38 +67,43 @@ class _MessageThreadState extends State<MessageThread>
     _stopTypingTimer?.cancel();
     _textEditingController
         .removeListener(() => _textEditingController.dispose());
+    // context.read<MessageThreadCubit>().close();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    switch (state) {
-      case AppLifecycleState.resumed:
-        if (chatId.isNotEmpty) {
-          await context
-              .read<MessageThreadCubit>()
-              .messages(chatId, forceRefresh: true);
-        }
-        break;
-      case AppLifecycleState.inactive:
-        print('AppCycleState inactive');
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) async {
+  //   switch (state) {
+  //     case AppLifecycleState.resumed:
+  //       if (chatId.isNotEmpty) {
+  //         context
+  //             .read<MessageThreadCubit>()
+  //             .messages(chatId, forceRefresh: true);
+  //       }
+  //       break;
+  //     case AppLifecycleState.inactive:
+  //       widget.messageBloc.pause();
+  //       print('AppCycleState inactive');
 
-        break;
-      case AppLifecycleState.paused:
-        print('AppCycleState paused');
-        // _chatStream?.pause();
-        break;
-      case AppLifecycleState.detached:
-        print('AppCycleState detached');
-        // _chatStream?.pause();
-        break;
-      case AppLifecycleState.hidden:
-        print('AppCycleState hidden');
-        // _chatStream?.pause();
-        // _chatStream?.pause();
-        break;
-    }
-  }
+  //       break;
+  //     case AppLifecycleState.paused:
+  //       widget.messageBloc.pause();
+  //       print('AppCycleState paused');
+  //       // _chatStream?.pause();
+  //       break;
+  //     case AppLifecycleState.detached:
+  //       widget.messageBloc.pause();
+  //       print('AppCycleState detached');
+  //       // _chatStream?.pause();
+  //       break;
+  //     case AppLifecycleState.hidden:
+  //       widget.messageBloc.pause();
+  //       print('AppCycleState hidden');
+  //       // _chatStream?.pause();
+  //       // _chatStream?.pause();
+  //       break;
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -259,7 +263,7 @@ class _MessageThreadState extends State<MessageThread>
     return isMe;
   }
 
-  void _updateOnReceiptReceived() async {
+  void _updateOnMessageReceived() async {
     final messageThreadCubit = context.read<MessageThreadCubit>();
     final receiptBloc = context.read<ReceiptBloc>();
     if (chatId.isNotEmpty) {
@@ -292,7 +296,7 @@ class _MessageThreadState extends State<MessageThread>
     });
   }
 
-  void _updateOnMessageReceived() {
+  void _updateOnReceiptReceived() {
     final messageThreadCubit = context.read<MessageThreadCubit>();
     context.read<ReceiptBloc>().stream.listen((state) async {
       if (state is ReceiptReceivedSuccess) {

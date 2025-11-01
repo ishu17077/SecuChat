@@ -52,12 +52,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
   }
 
   Future<void> pause() async {
-    _messageService.pause();
+  await  _messageService.pause();
     // _subscription?.pause();
   }
 
   Future<void> resume() async {
-    _messageService.resume();
+   await _messageService.resume();
     // _subscription?.resume();
   }
 }

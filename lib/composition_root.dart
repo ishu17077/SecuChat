@@ -5,18 +5,14 @@ import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/data/datasources/sqflite_datasource_impl.dart';
 import 'package:secuchat/data/factories/db_factory_impl.dart';
-import 'package:secuchat/models/chat.dart';
-import 'package:secuchat/models/local_message.dart';
-import 'package:secuchat/notification_service/awesome_notification_impl.dart';
-import 'package:secuchat/notification_service/firebase_api.dart';
-import 'package:secuchat/notification_service/notification_service_contract.dart';
+import 'package:secuchat/notifications/awesome_notification_impl.dart';
+import 'package:secuchat/notifications/firebase_api.dart';
+import 'package:secuchat/notifications/notification_service_contract.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/home/home_cubit.dart';
 import 'package:secuchat/state_management/message/message_bloc.dart';
@@ -35,7 +31,6 @@ import 'package:secuchat/viewmodels/auth/email_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/auth/google_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/chats/chat_view_model.dart';
 import 'package:secuchat/viewmodels/chats/chats_view_model.dart';
-import 'package:encrypt/encrypt.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart' hide Key;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -102,7 +97,8 @@ class CompositionRoot {
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     final awesomeNotifications = AwesomeNotifications();
-    _notificationService = AwesomeNotificationService(awesomeNotifications);
+    _notificationService = AwesomeNotificationService(awesomeNotifications,
+        _messageService, _dataSource, _encryptionViewmodel, _localCache);
 
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
   }

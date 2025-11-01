@@ -70,11 +70,11 @@ class _NewChatState extends State<NewChat> {
             'https://marmelab.com/images/blog/ascii-art-converter/homer.png'),
       ),
       title: Text(
-        user.username ?? '',
+        user.name ?? '',
         style: const TextStyle(color: Colors.white),
       ),
       subtitle: Text(
-        user.email ?? '**No Email**',
+        user.username ?? '**No Username**',
         style: const TextStyle(color: Colors.white70),
       ),
       onTap: () => widget.homeRouter.onShowMessageThread(

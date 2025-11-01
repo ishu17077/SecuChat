@@ -13,7 +13,7 @@ class EncryptionViewmodel {
 
   String? _privatKey;
   String? publicKey;
-
+  
   EncryptionViewmodel(
       this.encryption, this._dataSource, this._localCache, this._userService);
 
