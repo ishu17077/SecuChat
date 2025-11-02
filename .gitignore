@@ -49,6 +49,7 @@ app.*.map.json
 /android/wrapper/
 **/node_modules/
 
+/play_store
 /secuchat
 /cloud_messaging/
 /local.properties

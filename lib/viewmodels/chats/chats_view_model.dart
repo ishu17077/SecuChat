@@ -54,6 +54,6 @@ class ChatsViewModel extends BaseViewModel {
             time: DateTime.now()),
         userId: userId);
 
-    await addMessage(localMessage);
+    return await addMessage(localMessage);
   }
 }

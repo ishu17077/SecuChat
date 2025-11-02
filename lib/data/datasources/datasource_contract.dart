@@ -6,6 +6,7 @@ abstract class IDataSource {
   Future<int> addChat(Chat chat);
   Future<int> addMessage(LocalMessage message);
   Future<Chat?> findChat({String? chatId, String? userId});
+  Future<bool> chatExists({String? chatId, String? userId});
   Future<List<Chat>> findAllChats();
   Future<void> updateMessage(LocalMessage message);
   Future<List<LocalMessage>> findMessages(String chatId);

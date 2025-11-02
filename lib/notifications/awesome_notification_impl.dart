@@ -62,6 +62,7 @@ class AwesomeNotificationService implements INotificationService {
   Future<void> initialize() async {
     await _awesomeNotifications.initialize(null, <NotificationChannel>[
       NotificationChannel(
+        icon: 'resource://mipmap/ic_launcher_foreground',
         channelKey: 'chat_messages',
         channelName: 'Chats',
         channelShowBadge: true,
@@ -172,21 +173,15 @@ class AwesomeNotificationService implements INotificationService {
         'receiver': receiver!,
       });
 
-      if (!_instance!._navigationKey.currentState!.mounted) {
-        debugPrint('Navigator not mounted, retrying...');
-        return;
-      }
-
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) => CompositionRoot.composeMessageThreadUi(
-            receiver!,
-            me,
-            _instance!._encryption,
-          ),
-        ),
-        (route) => route.isFirst,
-      );
+      // navigatorKey.currentState?.push(
+      //   MaterialPageRoute(
+      //     builder: (_) => CompositionRoot.composeMessageThreadUi(
+      //       receiver!,
+      //       me,
+      //       _instance!._encryption,
+      //     ),
+      //   ),
+      // );
       // Zone.current.runUnaryGuarded((context) async {
       //   navigatorKey.currentState?.pushAndRemoveUntil(
       //     MaterialPageRoute(

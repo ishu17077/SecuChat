@@ -7,7 +7,7 @@ plugins{
 
 
 def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
+def localPropertiesFile = project.file('local.properties')
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
@@ -26,7 +26,7 @@ if (flutterVersionName == null) {
 
 
 def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
+def keystorePropertiesFile = project.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
@@ -49,7 +49,7 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
-
+    
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.developerik.secuchat"
@@ -63,11 +63,30 @@ android {
     }
     signingConfigs {
        release {
-           keyAlias keystoreProperties['keyAlias']
-           keyPassword keystoreProperties['keyPassword']
-           storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-           storePassword keystoreProperties['storePassword']
-       }
+        if (keystorePropertiesFile.exists()) {
+            if (keystoreProperties['storeFile'] == null) {
+                throw new GradleException("storeFile is not defined in key.properties")
+            }
+            if (keystoreProperties['storePassword'] == null) {
+                throw new GradleException("storePassword is not defined in key.properties")
+            }
+            if (keystoreProperties['keyAlias'] == null) {
+                throw new GradleException("keyAlias is not defined in key.properties")
+            }
+            if (keystoreProperties['keyPassword'] == null) {
+                throw new GradleException("keyPassword is not defined in key.properties")
+            }
+
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storePassword keystoreProperties['storePassword']
+            
+            storeFile rootProject.file(keystoreProperties['storeFile'])
+
+        } else {
+            throw new GradleException("key.properties file not found in ${keystorePropertiesFile.absolutePath}")
+        }
+    }
    }
     buildTypes {
         release {

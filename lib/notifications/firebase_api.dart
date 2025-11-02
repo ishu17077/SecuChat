@@ -114,24 +114,18 @@ Database? _db;
 User? _user;
 
 class FirebaseNotifications {
-  FirebaseMessaging? _firebaseMessaging;
-  static FirebaseNotifications? _instance;
+  final FirebaseMessaging _firebaseMessaging;
 
-  FirebaseNotifications._() {
-    _firebaseMessaging ??= FirebaseMessaging.instance;
-  }
-
-  factory FirebaseNotifications() {
-    _instance ??= FirebaseNotifications._();
-    return _instance!;
+  FirebaseNotifications(this._firebaseMessaging, User? user) {
+    _user = user;
   }
   Future<void> initNotifications() async {
     if (_user?.id == null) {
       return;
     }
-    _firebaseMessaging!.subscribeToTopic(
+    _firebaseMessaging.subscribeToTopic(
         _user!.id!); //? Subscribing to listen to just my email
-    _firebaseMessaging!.requestPermission(
+    _firebaseMessaging.requestPermission(
       alert: true,
       announcement: true,
       badge: true,
@@ -145,15 +139,15 @@ class FirebaseNotifications {
 
     FirebaseMessaging.onMessage.listen(_onMessageRecieved);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      // App opened from background state via notification
-      print('App opened from background via notification');
-      // Handle navigation or specific actions based on the notification data
-    });
+    // FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    //   // App opened from background state via notification
+    //   print('App opened from background via notification');
+    //   // Handle navigation or specific actions based on the notification data
+    // });
   }
 
   Future<void> unsubscribe(String id) async {
-    _firebaseMessaging!.unsubscribeFromTopic(id);
+    _firebaseMessaging.unsubscribeFromTopic(id);
   }
 
   Future<void> _onMessageRecieved(RemoteMessage message) async {

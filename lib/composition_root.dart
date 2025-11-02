@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/data/datasources/sqflite_datasource_impl.dart';
@@ -107,20 +108,20 @@ class CompositionRoot {
         navigatorKey);
 
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
+    var status = await Permission.notification.status;
+
+    if (status.isDenied) {
+      await Permission.notification.request();
+    }
   }
 
   static Widget start() {
     final user = _authViewModel.signedInUser;
-    if (user != null) startNotificationService(user);
     return user != null ? composeHomeUi(user) : composeOnboardingUi();
   }
 
   static Widget composeHomeUi(User me) {
-    AwesomeNotificationService.notificationStream.listen(
-      (event) {
-        print("event: $event");
-      },
-    );
+    startNotificationService(me);
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => _chatsCubit),
@@ -144,10 +145,9 @@ class CompositionRoot {
         BlocProvider(create: (context) => messageThreadCubit),
         BlocProvider.value(value: _receiptBloc),
         BlocProvider.value(value: _typingNotifBloc),
+        BlocProvider.value(value: _messageBloc),
       ],
-      child: MessageThread(
-          receiver, me, _messageBloc, _chatsCubit, _typingNotifBloc,
-          chatId: chatId ?? ''),
+      child: MessageThread(receiver, me, _chatsCubit,chatId: chatId ?? ''),
     );
   }
 
@@ -170,7 +170,8 @@ class CompositionRoot {
   }
 
   static void startNotificationService(User me) async {
-    _firebaseNotifications = FirebaseNotifications();
+    final firebaseMessaging = FirebaseMessaging.instance;
+    _firebaseNotifications = FirebaseNotifications(firebaseMessaging, me);
     await _firebaseNotifications.initNotifications();
     // await _notificationService.createTempNotif(999);
   }

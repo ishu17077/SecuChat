@@ -78,13 +78,10 @@ class MessageService implements IMessageService {
         .where("to", isEqualTo: user.id!)
         .orderBy('time', descending: false)
         .get();
-    return messageMaps.docChanges
-        .where((doc) => doc.type == DocumentChangeType.added)
-        .map((doc) {
-          _removeDeliveredMessage(doc.doc.id);
-          return _mapIdToMessage(doc.doc.id, doc.doc.data()!);
-        })
-        .toList();
+    return messageMaps.docs.map((doc) {
+      _removeDeliveredMessage(doc.id);
+      return _mapIdToMessage(doc.id, doc.data()!);
+    }).toList();
   }
 
   void _removeDeliveredMessage(String id) async {

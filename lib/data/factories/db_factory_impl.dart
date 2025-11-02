@@ -46,8 +46,8 @@ class LocalDatabaseFactory {
   Future<void> _createChatTable(Database db) async {
     await db.execute("""CREATE TABLE ${ChatTable.tableName} (
         ${ChatTable.colId} INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-        ${ChatTable.colUserId} TEXT,
-        ${ChatTable.colGroupId} TEXT,
+        ${ChatTable.colUserId} TEXT UNIQUE,
+        ${ChatTable.colGroupId} TEXT UNIQUE,
         ${ChatTable.colCreatedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
         CONSTRAINT CK_GroupOrUserPresent CHECK (${ChatTable.colUserId} IS NOT NULL OR ${ChatTable.colGroupId} IS NOT NULL)
         )""").then((_) {

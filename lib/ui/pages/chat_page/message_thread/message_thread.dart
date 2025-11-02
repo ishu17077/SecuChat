@@ -11,7 +11,6 @@ import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
 import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_header.dart';
 import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_pill.dart';
 import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_text_field.dart';
-import 'package:secuchat/ui/pages/chat_page/message_thread/components/typing_indicator.dart';
 import 'package:secuchat/ui/widgets/app_back_button.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
@@ -20,11 +19,9 @@ class MessageThread extends StatefulWidget {
   final User receiver;
   final User me;
   final String chatId;
-  final MessageBloc messageBloc;
-  final TypingNotifBloc typingNotifBloc;
   final ChatsCubit chatsCubit;
-  const MessageThread(this.receiver, this.me, this.messageBloc, this.chatsCubit,
-      this.typingNotifBloc,
+
+  const MessageThread(this.receiver, this.me, this.chatsCubit,
       {super.key, this.chatId = ''});
   @override
   State<MessageThread> createState() => _MessageThreadState();
@@ -34,6 +31,11 @@ class _MessageThreadState extends State<MessageThread> {
   late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
+
+  late final messageBloc = context.read<MessageBloc>();
+  late final chatsCubit = widget.chatsCubit;
+  late final typingNotifBloc = context.read<TypingNotifBloc>();
+  late final MessageThreadCubit _messageThreadCubit;
   int count = 0;
   final GlobalKey _textBoxChangeKey = GlobalKey();
   Timer? _startTypingTimer;
@@ -47,6 +49,7 @@ class _MessageThreadState extends State<MessageThread> {
   @override
   void initState() {
     // WidgetsBinding.instance.addObserver(this);
+    _messageThreadCubit = context.read<MessageThreadCubit>();
     context.read<ReceiptBloc>().add(ReceiptEvent.onSubscribed(widget.me));
 
     receiver.id != null
@@ -56,6 +59,7 @@ class _MessageThreadState extends State<MessageThread> {
         : null;
     _updateOnMessageReceived();
     _updateOnReceiptReceived();
+
     //! _mystream was seperately assigned as it was changing with everytime something happens like a keyboard pop up lol, and that was bad like horrible, we need bloc
     super.initState();
   }
@@ -70,7 +74,6 @@ class _MessageThreadState extends State<MessageThread> {
     _stopTypingTimer?.cancel();
     _textEditingController
         .removeListener(() => _textEditingController.dispose());
-    // context.read<MessageThreadCubit>().close();
     super.dispose();
   }
 
@@ -119,7 +122,7 @@ class _MessageThreadState extends State<MessageThread> {
         forceMaterialTransparency: true,
         leading: Stack(
           children: [
-            // context.read<MessageThreadCubit>().chatViewModel.otherMessages != 0
+            //_messageThreadCubit.chatViewModel.otherMessages != 0
             //     ? CircleAvatar(
             //         backgroundColor: Colors.red,
             //         child: Text(
@@ -129,7 +132,7 @@ class _MessageThreadState extends State<MessageThread> {
             //       )
             //     : SizedBox(),
             AppBackButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => navigatorKey.currentState?.pop(),
             ),
           ],
         ),
@@ -231,7 +234,7 @@ class _MessageThreadState extends State<MessageThread> {
           time: DateTime.now(),
           iv: iv);
 
-      widget.messageBloc.add(MessageEvent.onMessageSent(message));
+      messageBloc.add(MessageEvent.onMessageSent(message));
 
       _textEditingController.clear();
       _startTypingTimer?.cancel();
@@ -246,11 +249,11 @@ class _MessageThreadState extends State<MessageThread> {
       status: ReceiptStatus.read,
       time: DateTime.now(),
     );
-    context.read<ReceiptBloc>().add(ReceiptEvent.onMessageSent(receipt));
     await context
         .read<MessageThreadCubit>()
         .chatViewModel
         .updateMessageReceipt(receipt);
+    context.read<ReceiptBloc>().add(ReceiptEvent.onMessageSent(receipt));
   }
 
   void _sendTypingNotification(String text) {
@@ -273,7 +276,7 @@ class _MessageThreadState extends State<MessageThread> {
         to: widget.receiver.id!,
         event: typing,
         time: DateTime.now());
-    widget.typingNotifBloc.add(TypingNotifEvent.sent(typingEvent));
+    typingNotifBloc.add(TypingNotifEvent.sent(typingEvent));
   }
 
   bool _isMe(String sender, String myId) {
@@ -282,15 +285,16 @@ class _MessageThreadState extends State<MessageThread> {
   }
 
   void _updateOnMessageReceived() async {
-    final messageThreadCubit = context.read<MessageThreadCubit>();
+    final messageThreadCubit = _messageThreadCubit;
     final receiptBloc = context.read<ReceiptBloc>();
     if (chatId.isNotEmpty) {
       messageThreadCubit.messages(chatId);
     }
 
-    subscription = widget.messageBloc.stream.listen((state) async {
+    subscription = messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
         await messageThreadCubit.chatViewModel.recieveMessage(state.message);
+
         final receipt = Receipt(
             messageId: state.message.id!,
             recipientId: state.message.from,
@@ -310,18 +314,18 @@ class _MessageThreadState extends State<MessageThread> {
       }
 
       await messageThreadCubit.messages(chatId);
-      await widget.chatsCubit.chats();
+      await chatsCubit.chats();
     });
   }
 
   void _updateOnReceiptReceived() {
-    final messageThreadCubit = context.read<MessageThreadCubit>();
+    final messageThreadCubit = _messageThreadCubit;
     context.read<ReceiptBloc>().stream.listen((state) async {
       if (state is ReceiptReceivedSuccess) {
         await messageThreadCubit.chatViewModel
             .updateMessageReceipt(state.receipt);
-        messageThreadCubit.messages(chatId);
-        widget.chatsCubit.chats();
+        await messageThreadCubit.messages(chatId);
+        await chatsCubit.chats();
       }
     });
   }

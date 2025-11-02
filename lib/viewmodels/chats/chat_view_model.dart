@@ -68,6 +68,11 @@ class ChatViewModel extends BaseViewModel {
     if (localMessage.chatId != chatId) {
       otherMessages++;
     }
+    chats.forEach((chat) {
+      if (chat.id == chatId) {
+        chat.unread = 0;
+      }
+    });
     messages.insert(0, localMessage);
     await addMessage(localMessage);
   }

@@ -24,7 +24,7 @@ abstract class BaseViewModel {
         return;
       }
     }
-    var chat = await _getChat(message.chatId, message.userId!, null);
+    Chat? chat = await _getChat(userId: message.userId!);
 
     if (chat == null) {
       final User? user = await _userService.fetchUserId(message.userId!);
@@ -41,7 +41,7 @@ abstract class BaseViewModel {
       chat.mostRecent = message;
       chats.add(chat);
     } else {
-      chats.add(chat);
+      chats.add(chat!);
     }
     message.chatId = chat.id;
     await _dataSource.addMessage(message);
@@ -49,9 +49,9 @@ abstract class BaseViewModel {
 
   Future<Chat?> _getChat(
       //TODO: Future impl groups
-      String? chatId,
+      {String? chatId,
       String? userId,
-      String? groupId) async {
+      String? groupId}) async {
     assert(chatId != null || userId != null || groupId != null,
         "user_id and chat_id cannot be null");
     return await _dataSource.findChat(chatId: chatId, userId: userId);

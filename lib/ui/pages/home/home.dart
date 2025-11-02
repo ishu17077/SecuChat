@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:async';
 import 'dart:isolate';
 
 import 'package:animated_text_kit/animated_text_kit.dart';
@@ -32,8 +33,10 @@ class _HomeState extends State<Home>
   List<String> typingEvents = [];
   int count = 0;
   bool keepLoading = true;
+  late final StreamSubscription _messageSubscription;
   bool shouldHideTextField = false;
   late User _user;
+  late final _messageBloc = context.read<MessageBloc>();
 
   @override
   void initState() {
@@ -66,7 +69,9 @@ class _HomeState extends State<Home>
         print('AppCycleState resumed');
         context.read<MessageBloc>().resume();
         context.read<TypingNotifBloc>().resume();
+        _messageSubscription.resume();
         context.read<ReceiptBloc>().resume();
+
         await context.read<ChatsCubit>().chats(forceRefresh: true);
         break;
       case AppLifecycleState.inactive:
@@ -76,6 +81,7 @@ class _HomeState extends State<Home>
       case AppLifecycleState.paused:
         context.read<MessageBloc>().pause();
         context.read<TypingNotifBloc>().pause();
+        _messageSubscription.resume();
         context.read<ReceiptBloc>().pause();
         print('AppCycleState paused');
         // _chatStream?.pause();
@@ -98,6 +104,7 @@ class _HomeState extends State<Home>
   void dispose() {
     // _chatStream?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    _messageSubscription.cancel();
     super.dispose();
   }
 
@@ -301,6 +308,9 @@ class _HomeState extends State<Home>
         },
       ),
       onTap: () async {
+        setState(() {
+          chat.unread = 0;
+        });
         await this.widget.router.onShowMessageThread(
             context, chat.from, widget.me, widget.encryption,
             chatId: chat.id);
@@ -312,13 +322,12 @@ class _HomeState extends State<Home>
 
   void _updateChatsOnMessageReceived() async {
     final chatsCubit = context.read<ChatsCubit>();
-    context.read<MessageBloc>().stream.listen((state) async {
+
+    _messageSubscription = _messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
-        await chatsCubit.viewModel
-            .receivedMessage(state.message.from, state.message)
-            .then(
-              (_) async => await chatsCubit.chats(),
-            );
+        (await chatsCubit.viewModel
+            .receivedMessage(state.message.from, state.message));
+        await chatsCubit.chats();
       }
     });
   }

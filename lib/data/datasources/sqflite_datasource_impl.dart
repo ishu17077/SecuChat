@@ -205,4 +205,19 @@ class SqfliteDatasource implements IDataSource {
     await _db.update(UserTable.tableName, userMap,
         where: "${UserTable.colId} = ?", whereArgs: [user.id]);
   }
+
+  @override
+  Future<bool> chatExists({String? chatId, String? userId}) async {
+    assert(chatId != null || userId != null,
+        "Either chatId of userId must be present");
+    final identifyingId =
+        chatId != null ? ChatTable.colId : ChatTable.colUserId;
+    final id = chatId ?? userId;
+    final chatMaps = await _db.query(ChatTable.tableName,
+        where: "$identifyingId = ?", whereArgs: [id], limit: 1);
+    if (chatMaps.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
 }
