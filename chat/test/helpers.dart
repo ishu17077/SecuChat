@@ -40,4 +40,5 @@ final Map<String, dynamic> typingEventMap = {
   "to": "dasdsd",
   "from": "sdhichaskjchzak",
   "event": "start",
+  "time": DateTime.now(),
 };

@@ -32,6 +32,13 @@ void main() {
       collectionReference.add(any),
     ).thenAnswer((realInvocation) async => docRef);
 
+    when(collectionReference.where(any, isEqualTo: anyNamed('isEqualTo'))).thenReturn(query);
+    when(
+      collectionReference.orderBy(any, descending: anyNamed('descending')),
+    ).thenReturn(query);
+    when(
+      query.orderBy(any, descending: anyNamed('descending')),
+    ).thenReturn(query);
     when(collectionReference.doc(any)).thenReturn(docRef);
     when(
       collectionReference.orderBy(any, descending: anyNamed('descending')),

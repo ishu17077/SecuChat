@@ -43,7 +43,7 @@ class TypingEvent {
           ? map["time"]
           : map["time"] is Timestamp
           ? (map["time"] as Timestamp).toDate()
-          : DateTime.parse(map["time"]!)),
+          : DateTime.parse(map["time"])),
       event: TypingParser.fromString(map["event"] ?? "stop"),
     );
     typingEvent._id = map["id"];
