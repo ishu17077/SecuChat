@@ -35,4 +35,12 @@ class TypingNotifBloc extends Bloc<TypingNotifEvent, TypingNotifState> {
     _typingNotification.dispose();
     return super.close();
   }
+
+  Future<void> pause() async {
+    _typingNotification.pause();
+  }
+
+  Future<void> resume() async {
+    _typingNotification.resume();
+  }
 }

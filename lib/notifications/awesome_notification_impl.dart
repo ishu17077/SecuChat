@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:chat/chat.dart';
@@ -23,27 +23,39 @@ class AwesomeNotificationService implements INotificationService {
   final EncryptionViewmodel _encryption;
   static ReceivedAction? initialAction;
   final AwesomeNotifications _awesomeNotifications;
+  final GlobalKey<NavigatorState> _navigationKey;
+  static final StreamController<Map<String, dynamic>> _notificationController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  // Add getter for the stream
+  static Stream<Map<String, dynamic>> get notificationStream =>
+      _notificationController.stream;
 
   AwesomeNotificationService._createInstance(
-      this._awesomeNotifications,
-      this._messageService,
-      this._datasource,
-      this._encryption,
-      this._localCache);
+    this._awesomeNotifications,
+    this._messageService,
+    this._datasource,
+    this._encryption,
+    this._localCache,
+    this._navigationKey,
+  );
 
 //! Singleton class
   factory AwesomeNotificationService(
-      AwesomeNotifications awesomeNotifications,
-      IMessageService messageService,
-      IDataSource datasource,
-      EncryptionViewmodel encryption,
-      ILocalCache localCache) {
+    AwesomeNotifications awesomeNotifications,
+    IMessageService messageService,
+    IDataSource datasource,
+    EncryptionViewmodel encryption,
+    ILocalCache localCache,
+    GlobalKey<NavigatorState> navKey,
+  ) {
     _instance ??= AwesomeNotificationService._createInstance(
         awesomeNotifications,
         messageService,
         datasource,
         encryption,
-        localCache);
+        localCache,
+        navKey);
     return _instance!;
   }
   @override
@@ -151,13 +163,46 @@ class AwesomeNotificationService implements INotificationService {
       // if(user == null){
       //   _instance.
       // }
-      navigatorKey.currentState?.push(MaterialPageRoute(
-        builder: (context) => CompositionRoot.composeMessageThreadUi(
-            receiver!, me, _instance!._encryption),
-      ));
+      // navigatorKey.currentState?.push(MaterialPageRoute(
+      //   builder: (context) => CompositionRoot.composeMessageThreadUi(
+      //       receiver!, me, _instance!._encryption),
+      // ));
+      _notificationController.add({
+        'me': me!,
+        'receiver': receiver!,
+      });
+
+      if (!_instance!._navigationKey.currentState!.mounted) {
+        debugPrint('Navigator not mounted, retrying...');
+        return;
+      }
+
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => CompositionRoot.composeMessageThreadUi(
+            receiver!,
+            me,
+            _instance!._encryption,
+          ),
+        ),
+        (route) => route.isFirst,
+      );
+      // Zone.current.runUnaryGuarded((context) async {
+      //   navigatorKey.currentState?.pushAndRemoveUntil(
+      //     MaterialPageRoute(
+      //       builder: (_) => CompositionRoot.composeMessageThreadUi(
+      //         receiver!,
+      //         me,
+      //         _instance!._encryption,
+      //       ),
+      //     ),
+      //     (route) => route.isFirst,
+      //   );
+      // }, navigatorKey.currentContext!);
 
       return;
     }
+
     print(receivedAction.payload);
     var message = Message.fromJSON({
       'id': receivedAction.payload!['message_id'],

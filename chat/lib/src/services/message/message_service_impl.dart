@@ -87,8 +87,8 @@ class MessageService implements IMessageService {
         .toList();
   }
 
-  void _removeDeliveredMessage(String id) {
-    _firestore.collection("messages").doc(id).delete();
+  void _removeDeliveredMessage(String id) async {
+    await _firestore.collection("messages").doc(id).delete();
   }
 
   Message _mapIdToMessage(String id, Map<String, dynamic> messageMap) {

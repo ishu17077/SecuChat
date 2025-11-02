@@ -33,4 +33,12 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
     _subscription?.cancel();
     return super.close();
   }
+
+  Future<void> pause() async {
+    _receiptService.pause();
+  }
+
+  Future<void> resume() async {
+    _receiptService.resume();
+  }
 }

@@ -8,8 +8,11 @@ import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/message_thread/message_thread_cubit.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
-import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_pill.dart';
-import 'package:secuchat/ui/pages/chatPage/message_thread/components/chat_text_field.dart';
+import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_header.dart';
+import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_pill.dart';
+import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_text_field.dart';
+import 'package:secuchat/ui/pages/chat_page/message_thread/components/typing_indicator.dart';
+import 'package:secuchat/ui/widgets/app_back_button.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
 
@@ -114,16 +117,22 @@ class _MessageThreadState extends State<MessageThread> {
         scrolledUnderElevation: 0.0,
 
         forceMaterialTransparency: true,
-        leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              opticalSize: 15,
-              size: 15,
-              color: Colors.white70,
+        leading: Stack(
+          children: [
+            // context.read<MessageThreadCubit>().chatViewModel.otherMessages != 0
+            //     ? CircleAvatar(
+            //         backgroundColor: Colors.red,
+            //         child: Text(
+            //           "${context.read<MessageThreadCubit>().chatViewModel.otherMessages}",
+            //           textScaler: TextScaler.linear(0.5),
+            //         ),
+            //       )
+            //     : SizedBox(),
+            AppBackButton(
+              onPressed: () => Navigator.pop(context),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
+          ],
+        ),
         backgroundColor: kBackgroundColor,
         // elevation: 10,
         title: Row(
@@ -140,11 +149,17 @@ class _MessageThreadState extends State<MessageThread> {
               ),
             ),
             SizedBox(width: MediaQuery.of(context).size.width * 0.05),
-            Text(
-              widget.receiver.name ??
-                  '', //? Jab change karne ka option hoga username tab server se refresh karenge
-              style: const TextStyle(color: Colors.white70),
-            ),
+            BlocBuilder<TypingNotifBloc, TypingNotifState>(
+                builder: (context, state) {
+              final isTyping = state is TypingReceivedSuccess &&
+                  state.typingEvent.event == Typing.start &&
+                  state.typingEvent.from == widget.receiver.id;
+
+              return ChatHeader(
+                username: widget.receiver.name ?? '',
+                isTyping: isTyping,
+              );
+            }),
           ],
         ),
       ),
@@ -254,7 +269,10 @@ class _MessageThreadState extends State<MessageThread> {
 
   void _dispatchTypingEvent(Typing typing) {
     final TypingEvent typingEvent = TypingEvent(
-        from: widget.me.id!, to: widget.receiver.id!, event: typing);
+        from: widget.me.id!,
+        to: widget.receiver.id!,
+        event: typing,
+        time: DateTime.now());
     widget.typingNotifBloc.add(TypingNotifEvent.sent(typingEvent));
   }
 

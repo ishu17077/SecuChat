@@ -25,14 +25,14 @@ class ReceiptService implements IReceiptService {
     DocumentReference docRef = await _firebaseFirestore
         .collection("receipts")
         .add(receipt.toJSON());
-    return _mapIdToMessage(docRef.id, receipt);
+    return _mapIdToMessage(docRef.id, receipt.toJSON());
   }
 
   @override
   Stream<Receipt> receipts({required User user}) {
     _changeFeed = _firebaseFirestore
         .collection("receipts")
-        .where("to", isEqualTo: user.id)
+        .where("recipient_id", isEqualTo: user.id)
         .snapshots()
         .listen((querySnapshot) {
           querySnapshot.docChanges.forEach((element) {
@@ -43,7 +43,7 @@ class ReceiptService implements IReceiptService {
                 }
                 final Receipt receipt = _mapIdToMessage(
                   element.doc.id,
-                  Receipt.fromJSON(element.doc.data()!),
+                  element.doc.data()!,
                 );
 
                 _controller.sink.add(receipt);
@@ -59,11 +59,19 @@ class ReceiptService implements IReceiptService {
     return _controller.stream;
   }
 
-  Receipt _mapIdToMessage(String id, Receipt receipt) {
-    return Receipt.fromJSON({"id": id, ...(receipt.toJSON())});
+  Receipt _mapIdToMessage(String id, Map<String, dynamic> receipt) {
+    return Receipt.fromJSON({"id": id, ...receipt});
   }
 
   void _removeDeliveredReceipt(Receipt receipt) {
     _firebaseFirestore.collection("receipts").doc(receipt.id).delete();
+  }
+
+  Future<void> pause() async {
+    _changeFeed?.pause();
+  }
+
+  Future<void> resume() async {
+    _changeFeed?.resume();
   }
 }

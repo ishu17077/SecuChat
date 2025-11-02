@@ -62,6 +62,7 @@ class _OnboardingState extends State<Onboarding> {
                   signInButton(
                     context,
                     text: "Continue with Google :)",
+                    textColor: Colors.black,
                     spaceBetween: 0.0,
                     color: const Color.fromARGB(220, 255, 255, 255),
                     imagePath: 'assets/google_icon.png',
@@ -77,35 +78,35 @@ class _OnboardingState extends State<Onboarding> {
               );
             }),
             SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-            Stack(
-              children: [
-                signInButton(
-                  context,
-                  text: "Continue with Facebook",
-                  spaceBetween: 5.0,
-                  color: const Color.fromARGB(220, 24, 119, 242),
-                  textColor: Colors.white,
-                  imagePath: 'assets/facebook_icon.png',
-                  heightImage: 32.0,
-                  widthImage: 32.0,
-                  onPressed: () {
-                    if (!isLoadingWithGoogle && !isLoadingWithFacebook) {
-                      setState(() {
-                        isLoadingWithFacebook = true;
-                      });
-                      FirebaseAuth.instance.signOut();
-                      setState(() {
-                        isLoadingWithFacebook = false;
-                      });
-                    }
-                  },
-                ),
-                isLoadingWithFacebook
-                    ? const Center(
-                        heightFactor: 1.4, child: CircularProgressIndicator())
-                    : const SizedBox(height: 0.0, width: 0.0)
-              ],
-            ),
+            // Stack(
+            //   children: [
+            //     signInButton(
+            //       context,
+            //       text: "Continue with Facebook",
+            //       spaceBetween: 5.0,
+            //       color: const Color.fromARGB(220, 24, 119, 242),
+            //       textColor: Colors.white,
+            //       imagePath: 'assets/facebook_icon.png',
+            //       heightImage: 32.0,
+            //       widthImage: 32.0,
+            //       onPressed: () {
+            //         if (!isLoadingWithGoogle && !isLoadingWithFacebook) {
+            //           setState(() {
+            //             isLoadingWithFacebook = true;
+            //           });
+            //           FirebaseAuth.instance.signOut();
+            //           setState(() {
+            //             isLoadingWithFacebook = false;
+            //           });
+            //         }
+            //       },
+            //     ),
+            //     isLoadingWithFacebook
+            //         ? const Center(
+            //             heightFactor: 1.4, child: CircularProgressIndicator())
+            //         : const SizedBox(height: 0.0, width: 0.0)
+            //   ],
+            // ),
             //TODO: Impl Email and password auth
             // SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             // Stack(

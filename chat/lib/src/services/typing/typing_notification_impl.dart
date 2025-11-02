@@ -29,27 +29,24 @@ class TypingNotification implements ITypingNotification {
   Stream<TypingEvent> subscribe({required User user, List<String>? userIds}) {
     _changeFeed = _firebaseFirestore
         .collection("typing_events")
-        .where("from", arrayContains: userIds)
+        // .where("from", arrayContains: userIds)
         .where("to", isEqualTo: user.id)
-        .orderBy('time', descending: false)
+        .orderBy('time')
         .snapshots()
         .listen((event) {
           event.docChanges.forEach((element) {
-            switch (element.type) {
-              case DocumentChangeType.added:
-                final data = element.doc.data();
-                if (data == null) {
-                  return;
-                }
-                final event = _mapIdToTypingEvent(element.doc.id, data);
-                _removingEvent(event);
-                _controller.sink.add(event);
-              default:
+            if (element.type == DocumentChangeType.added) {
+              final data = element.doc.data();
+              if (data == null) {
+                return;
+              }
+              final event = _mapIdToTypingEvent(element.doc.id, data);
+              _removingEvent(event);
+              _controller.sink.add(event);
             }
-            return;
           });
+          return;
         });
-
     _changeFeed?.onError((error) {
       debugPrint(error.toString());
     });
@@ -62,5 +59,15 @@ class TypingNotification implements ITypingNotification {
 
   TypingEvent _mapIdToTypingEvent(String id, Map<String, dynamic> event) {
     return TypingEvent.fromJSON({"id": id, ...event});
+  }
+
+  @override
+  Future<void> pause() async {
+    _changeFeed?.pause();
+  }
+
+  @override
+  Future<void> resume() async {
+    _changeFeed?.resume();
   }
 }

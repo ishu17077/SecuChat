@@ -14,6 +14,7 @@ import 'package:secuchat/notifications/awesome_notification_impl.dart';
 import 'package:secuchat/notifications/notification_service_contract.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -90,8 +91,13 @@ Future<void> _miniCompositionRoot() async {
   _encryptionViewmodel ??= EncryptionViewmodel(
       EncryptionService(), _datasource!, _localCache!, _userService!);
   if (_notificationService == null) {
-    _notificationService = AwesomeNotificationService(AwesomeNotifications(),
-        _messageService!, _datasource!, _encryptionViewmodel!, _localCache!);
+    _notificationService = AwesomeNotificationService(
+        AwesomeNotifications(),
+        _messageService!,
+        _datasource!,
+        _encryptionViewmodel!,
+        _localCache!,
+        navigatorKey);
     await _notificationService!.initialize();
   }
   _user ??= User.fromJSON(_localCache!.fetch("USER"));
@@ -108,33 +114,24 @@ Database? _db;
 User? _user;
 
 class FirebaseNotifications {
-  final FirebaseMessaging _firebaseMessaging;
-  FirebaseNotifications(
-      this._firebaseMessaging,
-      User user,
-      IDataSource _dataSource,
-      IMessageService _messageService,
-      EncryptionViewmodel _encryptionViewmodel,
-      IUserService _userService,
-      ILocalCache _localCache,
-      IReceiptService _receiptService,
-      INotificationService _notificationService) {
-    _encryptionViewmodel = _encryptionViewmodel;
-    _notificationService = _notificationService;
-    _messageService = _messageService;
-    _localCache = _localCache;
-    _datasource = _dataSource;
-    _user = user;
-    _receiptService = _receiptService;
-    _userService = _userService;
+  FirebaseMessaging? _firebaseMessaging;
+  static FirebaseNotifications? _instance;
+
+  FirebaseNotifications._() {
+    _firebaseMessaging ??= FirebaseMessaging.instance;
+  }
+
+  factory FirebaseNotifications() {
+    _instance ??= FirebaseNotifications._();
+    return _instance!;
   }
   Future<void> initNotifications() async {
     if (_user?.id == null) {
       return;
     }
-    _firebaseMessaging.subscribeToTopic(
+    _firebaseMessaging!.subscribeToTopic(
         _user!.id!); //? Subscribing to listen to just my email
-    _firebaseMessaging.requestPermission(
+    _firebaseMessaging!.requestPermission(
       alert: true,
       announcement: true,
       badge: true,
@@ -148,6 +145,15 @@ class FirebaseNotifications {
 
     FirebaseMessaging.onMessage.listen(_onMessageRecieved);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      // App opened from background state via notification
+      print('App opened from background via notification');
+      // Handle navigation or specific actions based on the notification data
+    });
+  }
+
+  Future<void> unsubscribe(String id) async {
+    _firebaseMessaging!.unsubscribeFromTopic(id);
   }
 
   Future<void> _onMessageRecieved(RemoteMessage message) async {

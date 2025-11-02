@@ -9,6 +9,7 @@ import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/home/home_cubit.dart';
 import 'package:secuchat/state_management/message/message_bloc.dart';
+import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/unit_components.dart';
@@ -64,6 +65,8 @@ class _HomeState extends State<Home>
       case AppLifecycleState.resumed:
         print('AppCycleState resumed');
         context.read<MessageBloc>().resume();
+        context.read<TypingNotifBloc>().resume();
+        context.read<ReceiptBloc>().resume();
         await context.read<ChatsCubit>().chats(forceRefresh: true);
         break;
       case AppLifecycleState.inactive:
@@ -71,7 +74,9 @@ class _HomeState extends State<Home>
 
         break;
       case AppLifecycleState.paused:
-       context.read<MessageBloc>().pause();
+        context.read<MessageBloc>().pause();
+        context.read<TypingNotifBloc>().pause();
+        context.read<ReceiptBloc>().pause();
         print('AppCycleState paused');
         // _chatStream?.pause();
         break;
@@ -140,7 +145,8 @@ class _HomeState extends State<Home>
         SliverToBoxAdapter(child: SizedBox(height: 5)),
         SliverList(
             delegate: SliverChildBuilderDelegate(
-                (context, index) => chatTile(chats[index], context),
+                (context, index) => chatTile(chats[index], context,
+                    unread: chats[index].unread),
                 childCount: chats.length))
       ],
       // body: Column(
@@ -242,7 +248,7 @@ class _HomeState extends State<Home>
     );
   }
 
-  Widget chatTile(Chat chat, BuildContext context) {
+  Widget chatTile(Chat chat, BuildContext context, {int unread = 0}) {
     return ListTile(
       tileColor: kBackgroundColor,
       splashColor: kSexyTealColor.withValues(alpha: 0.2),
@@ -253,6 +259,13 @@ class _HomeState extends State<Home>
               'https://www.shutterstock.com/image-photo/red-text-any-questions-paper-600nw-2312396111.jpg'),
         ),
       ),
+      trailing: unread != 0
+          ? CircleAvatar(
+              backgroundColor: Colors.red,
+              maxRadius: 10,
+              child: Text("$unread", textScaler: TextScaler.linear(0.7)),
+            )
+          : null,
       title: Text(
         chat.from?.name ?? '',
         style: const TextStyle(color: Colors.white),
@@ -263,17 +276,19 @@ class _HomeState extends State<Home>
           if (state is TypingReceivedSuccess &&
               state.typingEvent.event == Typing.start &&
               state.typingEvent.from == chat.from?.id) {
-            this.typingEvents.add(state.typingEvent.from);
-          } else if (state is TypingReceivedSuccess &&
-              state.typingEvent.event == Typing.stop &&
-              state.typingEvent.from == chat.from?.id) {
-            this.typingEvents.remove(state.typingEvent.from);
-          }
-          if (this.typingEvents.contains(chat.from?.id)) {
             return Text(
               "typing...",
               style:
                   TextStyle(color: Colors.green, fontStyle: FontStyle.italic),
+            );
+          } else if (state is TypingReceivedSuccess &&
+              state.typingEvent.event == Typing.stop &&
+              state.typingEvent.from == chat.from.id) {
+            return Text(
+              chat.mostRecent?.message.contents ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white70),
             );
           }
 

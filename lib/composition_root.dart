@@ -20,12 +20,13 @@ import 'package:secuchat/state_management/message_thread/message_thread_cubit.da
 import 'package:secuchat/state_management/onboarding/onboarding_cubit.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
-import 'package:secuchat/ui/pages/chatPage/add_new_chat/new_chat.dart';
-import 'package:secuchat/ui/pages/chatPage/message_thread/message_thread.dart';
+import 'package:secuchat/ui/pages/chat_page/new_chat/new_chat.dart';
+import 'package:secuchat/ui/pages/chat_page/message_thread/message_thread.dart';
 import 'package:secuchat/ui/pages/home/home.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
+import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:secuchat/viewmodels/auth/email_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/auth/google_sign_in_view_model.dart';
@@ -97,8 +98,13 @@ class CompositionRoot {
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     final awesomeNotifications = AwesomeNotifications();
-    _notificationService = AwesomeNotificationService(awesomeNotifications,
-        _messageService, _dataSource, _encryptionViewmodel, _localCache);
+    _notificationService = AwesomeNotificationService(
+        awesomeNotifications,
+        _messageService,
+        _dataSource,
+        _encryptionViewmodel,
+        _localCache,
+        navigatorKey);
 
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
   }
@@ -110,6 +116,11 @@ class CompositionRoot {
   }
 
   static Widget composeHomeUi(User me) {
+    AwesomeNotificationService.notificationStream.listen(
+      (event) {
+        print("event: $event");
+      },
+    );
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => _chatsCubit),
@@ -159,17 +170,7 @@ class CompositionRoot {
   }
 
   static void startNotificationService(User me) async {
-    final _firebaseMessaging = FirebaseMessaging.instance;
-    _firebaseNotifications = FirebaseNotifications(
-        _firebaseMessaging,
-        me,
-        _dataSource,
-        _messageService,
-        _encryptionViewmodel,
-        _userService,
-        _localCache,
-        _receiptService,
-        _notificationService);
+    _firebaseNotifications = FirebaseNotifications();
     await _firebaseNotifications.initNotifications();
     // await _notificationService.createTempNotif(999);
   }
