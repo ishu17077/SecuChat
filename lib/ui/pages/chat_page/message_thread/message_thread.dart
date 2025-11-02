@@ -207,7 +207,7 @@ class _MessageThreadState extends State<MessageThread> {
           final message = messages[index];
           var isMe = _isMe(message.message.from, widget.me.id!);
           if (!isMe && message.receipt.status != ReceiptStatus.read) {
-            _sendReceipt(message);
+            _sendReceipt(message.message, message.receipt);
           }
           return ChatPill(
             text: message.message.contents,
@@ -241,11 +241,11 @@ class _MessageThreadState extends State<MessageThread> {
     }
   }
 
-  void _sendReceipt(LocalMessage message) async {
-    if (message.receipt.status == ReceiptStatus.read) return;
-    final receipt = Receipt(
-      messageId: message.message.id!,
-      recipientId: message.message.to,
+  void _sendReceipt(Message message, Receipt receipt) async {
+    if (receipt.status == ReceiptStatus.read) return;
+    receipt = Receipt(
+      messageId: message.id!,
+      recipientId: message.to,
       status: ReceiptStatus.read,
       time: DateTime.now(),
     );
@@ -294,7 +294,6 @@ class _MessageThreadState extends State<MessageThread> {
     subscription = messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
         await messageThreadCubit.chatViewModel.recieveMessage(state.message);
-
         final receipt = Receipt(
             messageId: state.message.id!,
             recipientId: state.message.from,

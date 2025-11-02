@@ -2,6 +2,7 @@ import 'package:chat/chat.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/local_message.dart';
+import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:webcrypto/webcrypto.dart';
@@ -58,13 +59,15 @@ class ChatViewModel extends BaseViewModel {
       Receipt(
         messageId: message.id!,
         recipientId: message.to,
-        status: ReceiptStatus.sent,
+        status: ReceiptStatus.read,
         time: DateTime.now(),
       ),
       userId: message.from,
     );
+
     //! CAUTION: Rare conflict if chatId is null, but shouldn't be the case
     chatId ??= localMessage.chatId;
+
     if (localMessage.chatId != chatId) {
       otherMessages++;
     }

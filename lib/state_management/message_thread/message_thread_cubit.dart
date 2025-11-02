@@ -9,6 +9,7 @@ class MessageThreadCubit extends Cubit<List<LocalMessage>> {
   Future<void> messages(String chatId, {bool forceRefresh = false}) async {
     if (forceRefresh) chatViewModel.forceRefresh(chatId);
     final messages = await chatViewModel.getMessages(chatId);
+    
     if (isClosed) return;
     emit([...messages]);
   }
