@@ -53,7 +53,7 @@ class ChatPill extends StatelessWidget {
                 Flexible(
                   child: Text(
                     text ?? '',
-                    maxLines: 10  0,
+                    maxLines: 100,
                     textAlign: TextAlign.start,
                     style: const TextStyle(color: Colors.white, fontSize: 17),
                     softWrap: true,

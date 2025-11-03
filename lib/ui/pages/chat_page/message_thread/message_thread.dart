@@ -32,7 +32,7 @@ class _MessageThreadState extends State<MessageThread>
   late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
-
+  late final messageThreadCubit = context.read<MessageThreadCubit>();
   late final messageBloc = context.read<MessageBloc>();
   // late final chatsCubit = widget.chatsCubit;
   late final typingNotifBloc = context.read<TypingNotifBloc>();
@@ -41,7 +41,7 @@ class _MessageThreadState extends State<MessageThread>
   final GlobalKey _textBoxChangeKey = GlobalKey();
   Timer? _startTypingTimer;
   Timer? _stopTypingTimer;
-  late List<LocalMessage> messages = [];
+
   late String chatId = widget.chatId;
   late User receiver = widget.receiver;
   late final StreamSubscription subscription;
@@ -66,10 +66,7 @@ class _MessageThreadState extends State<MessageThread>
   }
 
   void _updateInitialReceipts() async {
-    final messages = await context
-        .read<MessageThreadCubit>()
-        .chatViewModel
-        .getMessages(chatId);
+    final messages = await messageThreadCubit.chatViewModel.getMessages(chatId);
     count = 0;
     for (var message in messages) {
       if (message.receipt.status == ReceiptStatus.sending) {
@@ -195,9 +192,8 @@ class _MessageThreadState extends State<MessageThread>
               Expanded(child:
                   BlocBuilder<MessageThreadCubit, List<LocalMessage>>(
                       builder: (context, messages) {
-                this.messages = messages;
                 if (messages.isEmpty) return SizedBox();
-                return _buildListOfMessages();
+                return _buildListOfMessages(messages);
               })),
               Align(
                 alignment: Alignment.bottomCenter,
@@ -220,7 +216,7 @@ class _MessageThreadState extends State<MessageThread>
     );
   }
 
-  Widget _buildListOfMessages() => ListView.builder(
+  Widget _buildListOfMessages(List<LocalMessage> messages) => ListView.builder(
         reverse: true,
         itemBuilder: (context, index) {
           // bool noMarginRequired = messageStore.senderEmail ==
@@ -260,23 +256,20 @@ class _MessageThreadState extends State<MessageThread>
     }
   }
 
-  void _sendReceipt(Message message, Receipt receipt) async {
+  Future<void> _sendReceipt(Message message, Receipt receipt) async {
     if (receipt.status == ReceiptStatus.read) return;
     receipt = Receipt(
       messageId: message.id!,
-      recipientId: message.to,
+      recipientId: message.from,
       status: ReceiptStatus.read,
       time: DateTime.now(),
     );
     context.read<ReceiptBloc>().add(ReceiptEvent.onMessageSent(receipt));
-    await context
-        .read<MessageThreadCubit>()
-        .chatViewModel
-        .updateMessageReceipt(receipt);
+    await messageThreadCubit.chatViewModel.updateMessageReceipt(receipt);
   }
 
   void _sendTypingNotification(String text) {
-    if (text.trim().isEmpty || messages.isEmpty) {
+    if (text.trim().isEmpty || chatId.isEmpty) {
       return;
     }
     if (_startTypingTimer?.isActive ?? false) return;
@@ -318,7 +311,8 @@ class _MessageThreadState extends State<MessageThread>
             status: ReceiptStatus.delivered,
             time: DateTime.now());
 
-        _sendReceipt(state.message, receipt);
+        await _sendReceipt(state.message, receipt);
+        await widget.chatsCubit.chats();
       } else if (state is MessageSentSuccess) {
         await messageThreadCubit.chatViewModel.sentMessage(state.message);
         if (chatId.isEmpty) {
@@ -363,7 +357,7 @@ class _MessageThreadState extends State<MessageThread>
         messageThreadCubit.messages(chatId);
         widget.chatsCubit.chats();
       }
-    } );
+    });
   }
 
 //TODO: Impl Async Encryption

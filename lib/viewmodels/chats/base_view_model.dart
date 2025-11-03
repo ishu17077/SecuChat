@@ -20,6 +20,8 @@ abstract class BaseViewModel {
       if (chat.userId == message.userId) {
         message.chatId = chat.id;
         chat.mostRecent = message;
+        chat.messages.add(message);
+        chat.unread++;
         await _dataSource.addMessage(message);
         return;
       }

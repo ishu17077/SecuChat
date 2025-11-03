@@ -50,10 +50,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
             encryptionKey.secretKey);
       }
       event.message.message = await _messageService.send(event.message.message);
-      event.message.message.contents = nonEncryptedContents;
+
       if (event.message.message.id != null &&
           event.message.message.id!.isNotEmpty) {
+        event.message.message.contents = nonEncryptedContents;
         emit(MessageResendSuccess(event.message));
+        return;
       }
     });
     on<_MessageReceived>((event, emit) async {
@@ -64,6 +66,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
             event.message.iv!.bytes,
             encryptionKey.secretKey);
       }
+
       emit(MessageState.received(event.message));
     });
   }

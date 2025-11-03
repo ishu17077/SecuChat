@@ -62,12 +62,14 @@ class SqfliteDatasource implements IDataSource {
       final chatsWithUnreadMessages =
           await txn.rawQuery("""SELECT chat_id, COUNT(*) 
       as unread FROM messages
-      WHERE receipt = ?
-      GROUP BY chat_id""", ["delivered"]);
+      WHERE receipt = ? 
+      GROUP BY chat_id""", ["sent"]);
 
       return chatsWithLatestMessage.map((element) {
         final int unread = chatsWithUnreadMessages.firstWhere(
-          (ele) => element["chat_id"] == ele["chat_id"],
+          (ele) =>
+              element["chat_id"] == ele["chat_id"] &&
+              element['id'] == ele['from'],
           orElse: () => {"unread": 0},
         )["unread"] as int;
         final User user = User.fromJSON(element);

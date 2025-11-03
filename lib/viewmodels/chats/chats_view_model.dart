@@ -15,6 +15,9 @@ class ChatsViewModel extends BaseViewModel {
       {required this.userService, required this.encryption})
       : super(_dataSource, userService);
   Future<List<Chat>> getChats() async {
+      
+
+
     if (chats.isEmpty) chats = await _dataSource.findAllChats();
     //! Spawn isolates
 
@@ -53,7 +56,7 @@ class ChatsViewModel extends BaseViewModel {
             status: ReceiptStatus.delivered,
             time: DateTime.now()),
         userId: userId);
-
+    
     return await addMessage(localMessage);
   }
 }

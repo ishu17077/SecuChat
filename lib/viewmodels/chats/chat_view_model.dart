@@ -45,7 +45,16 @@ class ChatViewModel extends BaseViewModel {
     if (chatId != null) {
       int id = await _dataSource.addMessage(localMessage);
       localMessage = _mapIdToLocalMessage(localMessage, id);
+
+      for (final chat in chats) {
+        if (chat.from.id! == message.to) {
+          chat.mostRecent = localMessage;
+          chat.messages.add(localMessage);
+        }
+      }
+
       this.messages.add(localMessage);
+
       return;
     }
     //TODO: Transition from chat_id to user_id
@@ -71,11 +80,12 @@ class ChatViewModel extends BaseViewModel {
     if (localMessage.chatId != chatId) {
       otherMessages++;
     }
-    chats.forEach((chat) {
+    for (var chat in chats) {
       if (chat.id == chatId) {
         chat.unread = 0;
+        break;
       }
-    });
+    }
     messages.insert(0, localMessage);
     await addMessage(localMessage);
   }
