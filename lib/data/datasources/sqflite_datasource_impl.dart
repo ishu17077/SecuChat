@@ -23,7 +23,7 @@ class SqfliteDatasource implements IDataSource {
 
     final messageMap = message.toJSON();
     int res = await _db.insert(MessageTable.tableName, messageMap,
-        conflictAlgorithm: ConflictAlgorithm.rollback);
+        conflictAlgorithm: ConflictAlgorithm.replace);
     return res;
   }
 

@@ -36,7 +36,7 @@ class MessageService implements IMessageService {
       DocumentReference<Map<String, dynamic>> docRef = await _firestore
           .collection("messages")
           .add(messageJson)
-          .timeout(Duration(seconds: 1));
+          .timeout(Duration(seconds: 2));
       messageReturn = _mapIdToMessage(docRef.id, message.toJSON());
     } catch (e) {
       debugPrint(e.toString());

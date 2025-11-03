@@ -34,7 +34,7 @@ class _MessageThreadState extends State<MessageThread>
   double heightOfTextField = 0;
 
   late final messageBloc = context.read<MessageBloc>();
-  late final chatsCubit = widget.chatsCubit;
+  // late final chatsCubit = widget.chatsCubit;
   late final typingNotifBloc = context.read<TypingNotifBloc>();
   late final MessageThreadCubit _messageThreadCubit;
   int count = 0;
@@ -204,7 +204,8 @@ class _MessageThreadState extends State<MessageThread>
                 child: ChatTextField(
                   key: _textBoxChangeKey,
                   textEditingController: _textEditingController,
-                  onChanged: _sendTypingNotification,
+                  // onChanged: _sendTypingNotification,
+                  onChanged: (changed) {},
                   onSendButtonPressed: (String contents) async {
                     _sendMessage();
                   },
@@ -267,11 +268,11 @@ class _MessageThreadState extends State<MessageThread>
       status: ReceiptStatus.read,
       time: DateTime.now(),
     );
+    context.read<ReceiptBloc>().add(ReceiptEvent.onMessageSent(receipt));
     await context
         .read<MessageThreadCubit>()
         .chatViewModel
         .updateMessageReceipt(receipt);
-    context.read<ReceiptBloc>().add(ReceiptEvent.onMessageSent(receipt));
   }
 
   void _sendTypingNotification(String text) {
@@ -282,10 +283,10 @@ class _MessageThreadState extends State<MessageThread>
     if (_stopTypingTimer?.isActive ?? false) _stopTypingTimer!.cancel();
 
     _dispatchTypingEvent(Typing.start);
-    _startTypingTimer = Timer(Duration(seconds: 3), () {});
+    _startTypingTimer = Timer(Duration(seconds: 8), () {});
 
     _stopTypingTimer =
-        Timer(Duration(seconds: 4), () => _dispatchTypingEvent(Typing.stop));
+        Timer(Duration(seconds: 7), () => _dispatchTypingEvent(Typing.stop));
   }
 
   void _dispatchTypingEvent(Typing typing) {
@@ -349,20 +350,20 @@ class _MessageThreadState extends State<MessageThread>
       }
 
       await messageThreadCubit.messages(chatId);
-      await chatsCubit.chats();
+      await widget.chatsCubit.chats();
     });
   }
 
   void _updateOnReceiptReceived() {
-    final messageThreadCubit = _messageThreadCubit;
+    final messageThreadCubit = context.read<MessageThreadCubit>();
     context.read<ReceiptBloc>().stream.listen((state) async {
       if (state is ReceiptReceivedSuccess) {
         await messageThreadCubit.chatViewModel
             .updateMessageReceipt(state.receipt);
-        await messageThreadCubit.messages(chatId);
-        await chatsCubit.chats();
+        messageThreadCubit.messages(chatId);
+        widget.chatsCubit.chats();
       }
-    });
+    } );
   }
 
 //TODO: Impl Async Encryption

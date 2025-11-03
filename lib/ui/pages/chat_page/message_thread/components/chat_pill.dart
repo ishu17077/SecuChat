@@ -13,7 +13,7 @@ class ChatPill extends StatelessWidget {
   const ChatPill({
     super.key,
     required this.text,
-    this.receiptStatus = ReceiptStatus.sent,
+    required this.receiptStatus,
     this.noMaginRequired = false,
     this.isLastMessage = false,
     required this.isMe,
@@ -53,7 +53,7 @@ class ChatPill extends StatelessWidget {
                 Flexible(
                   child: Text(
                     text ?? '',
-                    maxLines: 10,
+                    maxLines: 10  0,
                     textAlign: TextAlign.start,
                     style: const TextStyle(color: Colors.white, fontSize: 17),
                     softWrap: true,
@@ -62,7 +62,8 @@ class ChatPill extends StatelessWidget {
                 const SizedBox(width: 5),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: isMe ? getReceipt(receiptStatus) : const SizedBox(),
+                  child:
+                      isMe ? getReceipt(this.receiptStatus) : const SizedBox(),
                 )
               ],
             ),
@@ -79,12 +80,10 @@ class ChatPill extends StatelessWidget {
     switch (receiptStatus) {
       case ReceiptStatus.sent:
         return Icon(Icons.done, color: Colors.grey, size: 14);
-
       case ReceiptStatus.delivered:
-        return Icon(Icons.done_all, color: Colors.grey, size: 14);
+        return Icon(Icons.done_all, color: Colors.blueAccent, size: 14);
       case ReceiptStatus.read:
         return Icon(Icons.done_all, color: Colors.blueAccent, size: 14);
-
       case ReceiptStatus.sending:
         return Icon(Icons.lock_clock_outlined, color: Colors.grey, size: 14);
     }

@@ -91,9 +91,9 @@ class ChatViewModel extends BaseViewModel {
           break;
         }
       }
-      return await _dataSource.updateMessageReceipt(
-          receipt.messageId, receipt.status,
+      await _dataSource.updateMessageReceipt(receipt.messageId, receipt.status,
           localMessageId: localMessageId);
+      return;
     }
 
     for (LocalMessage message in messages) {
