@@ -25,7 +25,7 @@ class LocalDatabaseFactory {
     String databasePath = await getDatabasesPath();
     String dbPath = join(databasePath, "secuchat.db");
     _database = await openDatabase(dbPath,
-        onCreate: _populateDb, version: 3, onUpgrade: _upgradeDb);
+        onCreate: _populateDb, version: 4, onUpgrade: _upgradeDb);
     return _database!;
   }
 
@@ -40,6 +40,10 @@ class LocalDatabaseFactory {
     if (oldVer == 2 && newVer == 3) {
       await db.execute(
           """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colServerId} TEXT""");
+    }
+    if (oldVer == 3 && newVer == 4) {
+      await db.execute(
+          """ALTER TABLE ${MessageTable.tableName} ADD UNIQUE (${MessageTable.colServerId})""");
     }
   }
 
@@ -65,7 +69,7 @@ class LocalDatabaseFactory {
     ${MessageTable.colRecipient} TEXT,
     ${MessageTable.colReceipt} TEXT NOT NULL,
     ${MessageTable.colContents} TEXT NOT NULL,
-    ${MessageTable.colServerId} TEXT,
+    ${MessageTable.colServerId} TEXT UNIQUE,
     ${MessageTable.colCreatedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     ${MessageTable.colExecutedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
     )""").then((_) {

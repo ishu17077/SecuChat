@@ -27,7 +27,8 @@ class MessageThread extends StatefulWidget {
   State<MessageThread> createState() => _MessageThreadState();
 }
 
-class _MessageThreadState extends State<MessageThread> {
+class _MessageThreadState extends State<MessageThread>
+    with WidgetsBindingObserver {
   late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
@@ -48,7 +49,7 @@ class _MessageThreadState extends State<MessageThread> {
 
   @override
   void initState() {
-    // WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
     _messageThreadCubit = context.read<MessageThreadCubit>();
     context.read<ReceiptBloc>().add(ReceiptEvent.onSubscribed(widget.me));
 
@@ -59,9 +60,27 @@ class _MessageThreadState extends State<MessageThread> {
         : null;
     _updateOnMessageReceived();
     _updateOnReceiptReceived();
-
+    _updateInitialReceipts();
     //! _mystream was seperately assigned as it was changing with everytime something happens like a keyboard pop up lol, and that was bad like horrible, we need bloc
     super.initState();
+  }
+
+  void _updateInitialReceipts() async {
+    final messages = await context
+        .read<MessageThreadCubit>()
+        .chatViewModel
+        .getMessages(chatId);
+    count = 0;
+    for (var message in messages) {
+      if (message.receipt.status == ReceiptStatus.sending) {
+        messageBloc.add(MessageEvent.onMessageResend(message));
+      }
+      var isMe = _isMe(message.message.from, widget.me.id!);
+      if (!isMe && message.receipt.status != ReceiptStatus.read) {
+        _sendReceipt(message.message, message.receipt);
+      }
+      if (!isMe && count++ == 25) return;
+    }
   }
 
   @override
@@ -77,39 +96,40 @@ class _MessageThreadState extends State<MessageThread> {
     super.dispose();
   }
 
-  // @override
-  // void didChangeAppLifecycleState(AppLifecycleState state) async {
-  //   switch (state) {
-  //     case AppLifecycleState.resumed:
-  //       if (chatId.isNotEmpty) {
-  //         context
-  //             .read<MessageThreadCubit>()
-  //             .messages(chatId, forceRefresh: true);
-  //       }
-  //       break;
-  //     case AppLifecycleState.inactive:
-  //       widget.messageBloc.pause();
-  //       print('AppCycleState inactive');
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (chatId.isNotEmpty) {
+          context
+              .read<MessageThreadCubit>()
+              .messages(chatId, forceRefresh: true)
+              .then(
+            (value) {
+              _updateInitialReceipts();
+            },
+          );
+        }
+        break;
+      case AppLifecycleState.inactive:
+        print('AppCycleState inactive');
 
-  //       break;
-  //     case AppLifecycleState.paused:
-  //       widget.messageBloc.pause();
-  //       print('AppCycleState paused');
-  //       // _chatStream?.pause();
-  //       break;
-  //     case AppLifecycleState.detached:
-  //       widget.messageBloc.pause();
-  //       print('AppCycleState detached');
-  //       // _chatStream?.pause();
-  //       break;
-  //     case AppLifecycleState.hidden:
-  //       widget.messageBloc.pause();
-  //       print('AppCycleState hidden');
-  //       // _chatStream?.pause();
-  //       // _chatStream?.pause();
-  //       break;
-  //   }
-  // }
+        break;
+      case AppLifecycleState.paused:
+        print('AppCycleState paused');
+        // _chatStream?.pause();
+        break;
+      case AppLifecycleState.detached:
+        print('AppCycleState detached');
+        // _chatStream?.pause();
+        break;
+      case AppLifecycleState.hidden:
+        print('AppCycleState hidden');
+        // _chatStream?.pause();
+        // _chatStream?.pause();
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,9 +226,6 @@ class _MessageThreadState extends State<MessageThread> {
           //         ''); //? for some weird reason when previousMessageStore is null it actually returns true
           final message = messages[index];
           var isMe = _isMe(message.message.from, widget.me.id!);
-          if (!isMe && message.receipt.status != ReceiptStatus.read) {
-            _sendReceipt(message.message, message.receipt);
-          }
           return ChatPill(
             text: message.message.contents,
             receiptStatus: message.receipt.status,
@@ -286,7 +303,6 @@ class _MessageThreadState extends State<MessageThread> {
 
   void _updateOnMessageReceived() async {
     final messageThreadCubit = _messageThreadCubit;
-    final receiptBloc = context.read<ReceiptBloc>();
     if (chatId.isNotEmpty) {
       messageThreadCubit.messages(chatId);
     }
@@ -297,19 +313,38 @@ class _MessageThreadState extends State<MessageThread> {
         final receipt = Receipt(
             messageId: state.message.id!,
             recipientId: state.message.from,
-            status: ReceiptStatus.read,
+            status: ReceiptStatus.delivered,
             time: DateTime.now());
 
-        receiptBloc.add(ReceiptEvent.onMessageSent(receipt));
-      }
-      if (state is MessageSentSuccess) {
+        _sendReceipt(state.message, receipt);
+      } else if (state is MessageSentSuccess) {
         await messageThreadCubit.chatViewModel.sentMessage(state.message);
         if (chatId.isEmpty) {
-          chatId = messageThreadCubit.chatViewModel.chatId ??
-              messageThreadCubit.chatViewModel.chats
-                  .firstWhere((chat) => chat.userId == state.message.to)
-                  .id;
+          chatId = chatId.isEmpty
+              ? messageThreadCubit.chatViewModel.chatId ??
+                  messageThreadCubit.chatViewModel.chats
+                      .firstWhere((chat) => chat.userId == state.message.to)
+                      .id
+              : chatId;
         }
+      } else if (state is MessageSentFailed) {
+        chatId = chatId.isEmpty
+            ? messageThreadCubit.chatViewModel.chatId ??
+                messageThreadCubit.chatViewModel.chats
+                    .firstWhere((chat) => chat.userId == state.message.to)
+                    .id
+            : chatId;
+        await messageThreadCubit.chatViewModel
+            .sentMessage(state.message, status: ReceiptStatus.sending);
+      } else if (state is MessageResendSuccess) {
+        final receipt = Receipt(
+            messageId: state.message.message.id!,
+            recipientId: state.message.message.from,
+            status: ReceiptStatus.delivered,
+            time: DateTime.now());
+
+        await messageThreadCubit.chatViewModel
+            .updateMessageReceipt(receipt, localMessageId: state.message.id);
       }
 
       await messageThreadCubit.messages(chatId);

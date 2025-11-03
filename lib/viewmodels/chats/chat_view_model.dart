@@ -32,13 +32,13 @@ class ChatViewModel extends BaseViewModel {
     if (messages.length != this.messages.length) this.messages = messages;
   }
 
-  Future<void> sentMessage(Message message) async {
+  Future<void> sentMessage(Message message, {ReceiptStatus? status}) async {
     LocalMessage localMessage = LocalMessage(
         message,
         Receipt(
-          messageId: message.id!,
+          messageId: message.id ?? '',
           recipientId: message.to,
-          status: ReceiptStatus.sent,
+          status: status ?? ReceiptStatus.sent,
           time: DateTime.now(),
         ),
         userId: message.to);
@@ -80,9 +80,22 @@ class ChatViewModel extends BaseViewModel {
     await addMessage(localMessage);
   }
 
-  Future<void> updateMessageReceipt(Receipt receipt) async {
+  Future<void> updateMessageReceipt(Receipt receipt,
+      {String? localMessageId}) async {
     //TODO: Impl receipts wrong Impl
     //receipt.messageId is serverId
+    if (localMessageId != null) {
+      for (LocalMessage message in messages) {
+        if (message.id == localMessageId) {
+          message.receipt = receipt;
+          break;
+        }
+      }
+      return await _dataSource.updateMessageReceipt(
+          receipt.messageId, receipt.status,
+          localMessageId: localMessageId);
+    }
+
     for (LocalMessage message in messages) {
       if (message.message.id == receipt.messageId) {
         message.receipt = receipt;

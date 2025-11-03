@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:chat/chat.dart';
 import 'package:equatable/equatable.dart';
+import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 part 'message_event.dart';
 part 'message_state.dart';
@@ -31,7 +32,29 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
       }
       final message = await _messageService.send(event.message);
       message.contents = nonEncryptedContents;
-      emit(MessageState.sent(message));
+      if (message.id == null) {
+        emit(MessageSentFailed(message));
+        return;
+      }
+      emit(MessageSentSuccess(message));
+    });
+
+    on<MessageResend>((event, emit) async {
+      final nonEncryptedContents = event.message.message.contents;
+      final encryptionKey =
+          await _encryption.getChatAcmKey(event.message.message.to);
+      if (event.message.message.iv != null && encryptionKey != null) {
+        event.message.message.contents = await _encryption.encryption.encrypt(
+            event.message.message.contents,
+            event.message.message.iv!.bytes,
+            encryptionKey.secretKey);
+      }
+      event.message.message = await _messageService.send(event.message.message);
+      event.message.message.contents = nonEncryptedContents;
+      if (event.message.message.id != null &&
+          event.message.message.id!.isNotEmpty) {
+        emit(MessageResendSuccess(event.message));
+      }
     });
     on<_MessageReceived>((event, emit) async {
       final encryptionKey = await _encryption.getChatAcmKey(event.message.from);
@@ -52,12 +75,12 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
   }
 
   Future<void> pause() async {
-  await  _messageService.pause();
+    await _messageService.pause();
     // _subscription?.pause();
   }
 
   Future<void> resume() async {
-   await _messageService.resume();
+    await _messageService.resume();
     // _subscription?.resume();
   }
 }

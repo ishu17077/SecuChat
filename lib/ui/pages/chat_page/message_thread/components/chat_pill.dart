@@ -62,19 +62,7 @@ class ChatPill extends StatelessWidget {
                 const SizedBox(width: 5),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: isMe
-                      ? receiptStatus == ReceiptStatus.read
-                          ? const Icon(
-                              Icons.done_all,
-                              color: Colors.blue,
-                              size: 12,
-                            )
-                          : const Icon(
-                              Icons.done,
-                              color: Colors.grey,
-                              size: 17,
-                            )
-                      : const SizedBox(),
+                  child: isMe ? getReceipt(receiptStatus) : const SizedBox(),
                 )
               ],
             ),
@@ -85,5 +73,20 @@ class ChatPill extends StatelessWidget {
             : const SizedBox(),
       ]),
     );
+  }
+
+  Icon getReceipt(ReceiptStatus receiptStatus) {
+    switch (receiptStatus) {
+      case ReceiptStatus.sent:
+        return Icon(Icons.done, color: Colors.grey, size: 14);
+
+      case ReceiptStatus.delivered:
+        return Icon(Icons.done_all, color: Colors.grey, size: 14);
+      case ReceiptStatus.read:
+        return Icon(Icons.done_all, color: Colors.blueAccent, size: 14);
+
+      case ReceiptStatus.sending:
+        return Icon(Icons.lock_clock_outlined, color: Colors.grey, size: 14);
+    }
   }
 }

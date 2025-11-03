@@ -30,10 +30,18 @@ class MessageService implements IMessageService {
   @override
   Future<Message> send(Message message) async {
     late final Message messageReturn;
-    DocumentReference<Map<String, dynamic>> docRef = await _firestore
-        .collection("messages")
-        .add(message.toJSON());
-    messageReturn = _mapIdToMessage(docRef.id, message.toJSON());
+    try {
+      var messageJson = message.toJSON();
+      messageJson.remove("id");
+      DocumentReference<Map<String, dynamic>> docRef = await _firestore
+          .collection("messages")
+          .add(messageJson)
+          .timeout(Duration(seconds: 1));
+      messageReturn = _mapIdToMessage(docRef.id, message.toJSON());
+    } catch (e) {
+      debugPrint(e.toString());
+      return message;
+    }
     return messageReturn;
   }
 

@@ -30,4 +30,23 @@ class MessageReceivedSuccess extends MessageState {
   @override
   List<Object?> get props => [message];
 }
+
+class MessageSentFailed extends MessageState {
+  final Message message;
+  const MessageSentFailed(this.message);
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [message];
+}
+
+class MessageResendSuccess extends MessageState {
+  final LocalMessage message;
+  const MessageResendSuccess(this.message);
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [message];
+}
+
 //TODO: implementation of failure in case of decryption failed and other issues

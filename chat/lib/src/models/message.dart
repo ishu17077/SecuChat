@@ -18,7 +18,7 @@ class Message {
     this.iv,
   });
 
-  toJSON() => {
+  Map<String, dynamic> toJSON() => {
     "from": from,
     "to": to,
     "contents": contents,

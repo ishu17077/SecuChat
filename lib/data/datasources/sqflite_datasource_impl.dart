@@ -158,8 +158,15 @@ class SqfliteDatasource implements IDataSource {
   }
 
   @override
-  Future<void> updateMessageReceipt(
-      String messageId, ReceiptStatus status) async {
+  Future<void> updateMessageReceipt(String messageId, ReceiptStatus status,
+      {String? localMessageId}) async {
+    if (localMessageId != null) {
+      await _db.update(MessageTable.tableName, {"receipt": status.value()},
+          where: "${MessageTable.colId} = ?",
+          whereArgs: [localMessageId],
+          conflictAlgorithm: ConflictAlgorithm.replace);
+      return;
+    }
     await _db.update(MessageTable.tableName, {"receipt": status.value()},
         where: "${MessageTable.colServerId} = ?",
         whereArgs: [messageId],
