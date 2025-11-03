@@ -73,6 +73,7 @@ class _MessageThreadState extends State<MessageThread>
     count = 0;
     for (var message in messages) {
       if (message.receipt.status == ReceiptStatus.sending) {
+        message.message.iv = IV.fromSecureRandom(16);
         messageBloc.add(MessageEvent.onMessageResend(message));
       }
       var isMe = _isMe(message.message.from, widget.me.id!);
@@ -340,7 +341,7 @@ class _MessageThreadState extends State<MessageThread>
         final receipt = Receipt(
             messageId: state.message.message.id!,
             recipientId: state.message.message.from,
-            status: ReceiptStatus.delivered,
+            status: ReceiptStatus.sent,
             time: DateTime.now());
 
         await messageThreadCubit.chatViewModel

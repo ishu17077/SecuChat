@@ -42,8 +42,33 @@ class LocalDatabaseFactory {
           """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colServerId} TEXT""");
     }
     if (oldVer == 3 && newVer == 4) {
-      await db.execute(
-          """ALTER TABLE ${MessageTable.tableName} ADD UNIQUE (${MessageTable.colServerId})""");
+      await db.transaction((txn) async {
+        await txn.execute("PRAGMA foreign_keys = OFF;");
+        await txn.execute(
+            "ALTER TABLE ${MessageTable.tableName} RENAME TO OldMessageTable;");
+
+        await txn.execute("""CREATE TABLE ${MessageTable.tableName}(
+    ${MessageTable.colId} INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    ${MessageTable.colChatId} TEXT NOT NULL,
+    ${MessageTable.colSender} TEXT NOT NULL,
+    ${MessageTable.colRecipient} TEXT,
+    ${MessageTable.colReceipt} TEXT NOT NULL,
+    ${MessageTable.colContents} TEXT NOT NULL,
+    ${MessageTable.colServerId} TEXT UNIQUE,
+    ${MessageTable.colCreatedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    ${MessageTable.colExecutedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    )""");
+        await txn.execute(
+            """INSERT INTO ${MessageTable.tableName} SELECT * FROM OldMessageTable 
+            WHERE OldMessageTable.rowId IN 
+            (SELECT MIN(rowid)
+               FROM OldMessageTable
+               GROUP BY server_id);""");
+        // await txn.execute(
+        //     "CREATE INDEX messages_index ON ${MessageTable.tableName} (${MessageTable.colChatId}, ${MessageTable.colExecutedAt} DESC, ${MessageTable.colCreatedAt} DESC, ${MessageTable.colReceipt})");
+        await txn.execute("DROP TABLE OldMessageTable;");
+        await txn.execute("PRAGMA foreign_keys = ON;");
+      });
     }
   }
 

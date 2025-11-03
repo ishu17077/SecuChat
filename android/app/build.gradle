@@ -7,7 +7,7 @@ plugins{
 
 
 def localProperties = new Properties()
-def localPropertiesFile = project.file('local.properties')
+def localPropertiesFile = rootProject.file('./local.properties')
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
@@ -35,15 +35,16 @@ android {
     namespace 'com.developerik.secuchat'
     compileSdk flutter.compileSdkVersion
     ndkVersion "29.0.13846066"
+    
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = "17"
     }
 
     sourceSets {
@@ -80,7 +81,6 @@ android {
             keyAlias keystoreProperties['keyAlias']
             keyPassword keystoreProperties['keyPassword']
             storePassword keystoreProperties['storePassword']
-            
             storeFile rootProject.file(keystoreProperties['storeFile'])
 
         } else {
