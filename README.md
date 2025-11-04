@@ -2,7 +2,9 @@
 
 <h3>To be updated soon<h3>
 
-## Getting Started With Flutter Documentation
+['SecuChat']('https://play.google.com/store/apps/details?id=com.developerik.secuchat')
+
+## Getting Started With Documentation
 
 The Project was made to improve the current privacy fiasco of chat apps.
 
