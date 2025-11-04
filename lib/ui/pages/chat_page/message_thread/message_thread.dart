@@ -252,9 +252,29 @@ class _MessageThreadState extends State<MessageThread>
           contents: text,
           time: DateTime.now(),
           iv: iv);
+      final receipt = Receipt(
+        messageId: "",
+        recipientId: message.from,
+        status: ReceiptStatus.read,
+        time: DateTime.now(),
+      );
+      chatId = chatId.isEmpty
+          ? messageThreadCubit.chatViewModel.chatId ??
+              messageThreadCubit.chatViewModel.chats
+                  .firstWhere((chat) => chat.userId == message.to)
+                  .id
+          : chatId;
 
-      messageBloc.add(MessageEvent.onMessageSent(message));
-
+      String id = await messageThreadCubit.chatViewModel
+          .sentMessage(message, status: ReceiptStatus.sending);
+      var localMessage =
+          LocalMessage(message, receipt, userId: widget.receiver.id!);
+      localMessage.receipt = receipt;
+      localMessage = _mapIdToLocalMessage(localMessage, id);
+      localMessage.chatId = chatId;
+      if (id.isNotEmpty) {
+        messageBloc.add(MessageEvent.onMessageSent(localMessage));
+      }
       _textEditingController.clear();
       _startTypingTimer?.cancel();
     }
@@ -305,7 +325,6 @@ class _MessageThreadState extends State<MessageThread>
     if (chatId.isNotEmpty) {
       messageThreadCubit.messages(chatId);
     }
-
     subscription = messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
         await messageThreadCubit.chatViewModel.recieveMessage(state.message);
@@ -314,41 +333,36 @@ class _MessageThreadState extends State<MessageThread>
             recipientId: state.message.from,
             status: ReceiptStatus.delivered,
             time: DateTime.now());
-
         await _sendReceipt(state.message, receipt);
         await widget.chatsCubit.chats();
       } else if (state is MessageSentSuccess) {
-        await messageThreadCubit.chatViewModel.sentMessage(state.message);
-        if (chatId.isEmpty) {
-          chatId = chatId.isEmpty
-              ? messageThreadCubit.chatViewModel.chatId ??
-                  messageThreadCubit.chatViewModel.chats
-                      .firstWhere((chat) => chat.userId == state.message.to)
-                      .id
-              : chatId;
-        }
-      } else if (state is MessageSentFailed) {
-        chatId = chatId.isEmpty
-            ? messageThreadCubit.chatViewModel.chatId ??
-                messageThreadCubit.chatViewModel.chats
-                    .firstWhere((chat) => chat.userId == state.message.to)
-                    .id
-            : chatId;
+        final receipt = Receipt(
+            messageId: state.message.message.id!,
+            recipientId: state.message.message.from,
+            status: ReceiptStatus.sent,
+            time: DateTime.now());
         await messageThreadCubit.chatViewModel
-            .sentMessage(state.message, status: ReceiptStatus.sending);
+            .updateMessageReceipt(receipt, localMessageId: state.message.id)
+            .then((_) {
+          messageThreadCubit.messages(chatId);
+          widget.chatsCubit.chats();
+        });
+      } else if (state is MessageSentFailed) {
       } else if (state is MessageResendSuccess) {
         final receipt = Receipt(
             messageId: state.message.message.id!,
             recipientId: state.message.message.from,
             status: ReceiptStatus.sent,
             time: DateTime.now());
-
         await messageThreadCubit.chatViewModel
-            .updateMessageReceipt(receipt, localMessageId: state.message.id);
-      }
-
-      await messageThreadCubit.messages(chatId);
-      await widget.chatsCubit.chats();
+            .updateMessageReceipt(receipt, localMessageId: state.message.id)
+            .then(
+          (_) {
+            messageThreadCubit.messages(chatId);
+            widget.chatsCubit.chats();
+          },
+        );
+      } else if (state is MessageSending) {}
     });
   }
 
@@ -362,6 +376,10 @@ class _MessageThreadState extends State<MessageThread>
         widget.chatsCubit.chats();
       }
     });
+  }
+
+  LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, String id) {
+    return LocalMessage.fromJSON({...localMessage.toJSON(), "id": id});
   }
 
 //TODO: Impl Async Encryption

@@ -21,22 +21,24 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
           .listen((message) => add(_MessageReceived(message)));
     });
 
-    on<MessageSent>((event, emit) async {
-      final nonEncryptedContents = event.message.contents;
-      final encryptionKey = await _encryption.getChatAcmKey(event.message.to);
-      if (event.message.iv != null && encryptionKey != null) {
-        event.message.contents = await _encryption.encryption.encrypt(
-            event.message.contents,
-            event.message.iv!.bytes,
+    on<MessageSend>((event, emit) async {
+      emit(MessageSending(event.message.message));
+      final nonEncryptedContents = event.message.message.contents;
+      final encryptionKey =
+          await _encryption.getChatAcmKey(event.message.message.to);
+      if (event.message.message.iv != null && encryptionKey != null) {
+        event.message.message.contents = await _encryption.encryption.encrypt(
+            event.message.message.contents,
+            event.message.message.iv!.bytes,
             encryptionKey.secretKey);
       }
-      final message = await _messageService.send(event.message);
-      message.contents = nonEncryptedContents;
-      if (message.id == null) {
-        emit(MessageSentFailed(message));
+      event.message.message = await _messageService.send(event.message.message);
+      event.message.message.contents = nonEncryptedContents;
+      if (event.message.message.id != null) {
+        emit(MessageSentSuccess(event.message));
         return;
       }
-      emit(MessageSentSuccess(message));
+      emit(MessageSentFailed(event.message));
     });
 
     on<MessageResend>((event, emit) async {

@@ -4,7 +4,8 @@ sealed class MessageEvent extends Equatable {
   const MessageEvent();
 
   factory MessageEvent.subscribed(User user) => Subscribed(user);
-  factory MessageEvent.onMessageSent(Message message) => MessageSent(message);
+  factory MessageEvent.onMessageSent(LocalMessage message) =>
+      MessageSend(message);
   factory MessageEvent.onMessageResend(LocalMessage message) =>
       MessageResend(message);
 
@@ -28,9 +29,9 @@ class Subscribed extends MessageEvent {
   List<Object?> get props => [user];
 }
 
-class MessageSent extends MessageEvent {
-  final Message message;
-  const MessageSent(this.message);
+class MessageSend extends MessageEvent {
+  final LocalMessage message;
+  const MessageSend(this.message);
   @override
   List<Object?> get props => [message];
 }

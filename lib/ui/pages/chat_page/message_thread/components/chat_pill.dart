@@ -81,7 +81,7 @@ class ChatPill extends StatelessWidget {
       case ReceiptStatus.sent:
         return Icon(Icons.done, color: Colors.grey, size: 14);
       case ReceiptStatus.delivered:
-        return Icon(Icons.done_all, color: Colors.blueAccent, size: 14);
+        return Icon(Icons.done_all, color: Colors.grey, size: 14);
       case ReceiptStatus.read:
         return Icon(Icons.done_all, color: Colors.blueAccent, size: 14);
       case ReceiptStatus.sending:

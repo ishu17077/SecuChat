@@ -5,15 +5,12 @@ import 'package:chat/chat.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:secuchat/cache/local_cache.dart';
-import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/notifications/notification_service_contract.dart';
-import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
-@pragma("vm:entry-point")
 class AwesomeNotificationService implements INotificationService {
   static AwesomeNotificationService? _instance;
   final Map<int, List<Message>> notifMap = {};
@@ -154,6 +151,7 @@ class AwesomeNotificationService implements INotificationService {
     await _awesomeNotifications.cancelAll();
   }
 
+  @pragma("vm:entry-point")
   static Future<void> _onActionReceivedMethod(
       ReceivedAction receivedAction) async {
     if (receivedAction.buttonKeyInput.isEmpty) {
@@ -194,7 +192,6 @@ class AwesomeNotificationService implements INotificationService {
       //     (route) => route.isFirst,
       //   );
       // }, navigatorKey.currentContext!);
-
       return;
     }
 

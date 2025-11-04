@@ -32,7 +32,7 @@ class ChatViewModel extends BaseViewModel {
     if (messages.length != this.messages.length) this.messages = messages;
   }
 
-  Future<void> sentMessage(Message message, {ReceiptStatus? status}) async {
+  Future<String> sentMessage(Message message, {ReceiptStatus? status}) async {
     LocalMessage localMessage = LocalMessage(
         message,
         Receipt(
@@ -52,14 +52,12 @@ class ChatViewModel extends BaseViewModel {
           chat.messages.add(localMessage);
         }
       }
-
       this.messages.add(localMessage);
-
-      return;
+      return localMessage.id;
     }
     //TODO: Transition from chat_id to user_id
     messages.insert(0, localMessage);
-    await addMessage(localMessage);
+    return await addMessage(localMessage);
   }
 
   Future<void> recieveMessage(Message message) async {
@@ -112,7 +110,7 @@ class ChatViewModel extends BaseViewModel {
         break;
       }
     }
-    await _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
+    _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
   }
 
   LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, int id) {

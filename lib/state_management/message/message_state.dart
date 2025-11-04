@@ -5,7 +5,8 @@ sealed class MessageState extends Equatable {
 
   factory MessageState.initial() => MessageInitial();
 
-  factory MessageState.sent(Message message) => MessageSentSuccess(message);
+  factory MessageState.sent(LocalMessage message) =>
+      MessageSentSuccess(message);
 
   factory MessageState.received(Message message) =>
       MessageReceivedSuccess(message);
@@ -17,9 +18,18 @@ sealed class MessageState extends Equatable {
 class MessageInitial extends MessageState {}
 
 class MessageSentSuccess extends MessageState {
-  final Message message;
+  final LocalMessage message;
   const MessageSentSuccess(this.message);
   @override
+  List<Object?> get props => [message];
+}
+
+class MessageSending extends MessageState {
+  final Message message;
+  const MessageSending(this.message);
+
+  @override
+  // TODO: implement props
   List<Object?> get props => [message];
 }
 
@@ -32,7 +42,7 @@ class MessageReceivedSuccess extends MessageState {
 }
 
 class MessageSentFailed extends MessageState {
-  final Message message;
+  final LocalMessage message;
   const MessageSentFailed(this.message);
 
   @override

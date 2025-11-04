@@ -12,7 +12,7 @@ abstract class BaseViewModel {
   BaseViewModel(this._dataSource, this._userService);
 
   @protected
-  Future<void> addMessage(LocalMessage message) async {
+  Future<String> addMessage(LocalMessage message) async {
     assert(message.chatId != null || message.userId != null,
         "Both user_id and chat_id cannot be null");
     //? Caching technique not accessing db
@@ -22,8 +22,8 @@ abstract class BaseViewModel {
         chat.mostRecent = message;
         chat.messages.add(message);
         chat.unread++;
-        await _dataSource.addMessage(message);
-        return;
+        int id = await _dataSource.addMessage(message);
+        return "$id";
       }
     }
     Chat? chat = await _getChat(userId: message.userId!);
@@ -32,7 +32,7 @@ abstract class BaseViewModel {
       final User? user = await _userService.fetchUserId(message.userId!);
       if (user == null) {
         debugPrint("Cannot find user for id ${message.userId}");
-        return;
+        return "";
       }
 
       //TODO: Return chat id on successful chat creation in database
@@ -41,12 +41,11 @@ abstract class BaseViewModel {
       chat = Chat.fromJSON({"id": chatId, "user_id": message.userId});
       chat.from = user;
       chat.mostRecent = message;
-      chats.add(chat);
-    } else {
-      chats.add(chat!);
     }
     message.chatId = chat.id;
-    await _dataSource.addMessage(message);
+    chats.add(chat!);
+    int id = await _dataSource.addMessage(message);
+    return "$id";
   }
 
   Future<Chat?> _getChat(

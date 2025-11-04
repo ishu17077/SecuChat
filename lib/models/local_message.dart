@@ -56,7 +56,7 @@ class LocalMessage {
         status:
             ReceiptStatusParsing.fromString(messageMap["receipt"] ?? 'sent'),
       ),
-      chatId: messageMap["chat_id"]!,
+      chatId: messageMap["chat_id"] ?? '',
     );
     localMessage._id = "${messageMap["id"]}";
     return localMessage;
