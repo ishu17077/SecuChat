@@ -8,7 +8,7 @@ import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 abstract class BaseViewModel {
   final IDataSource _dataSource;
   final IUserService _userService;
-  List<Chat> chats = List.empty(growable: true);
+  List<Chat> chats = [];
   BaseViewModel(this._dataSource, this._userService);
 
   @protected
@@ -41,9 +41,12 @@ abstract class BaseViewModel {
       chat = Chat.fromJSON({"id": chatId, "user_id": message.userId});
       chat.from = user;
       chat.mostRecent = message;
+      chats.add(chat);
+    } else {
+      chats.add(chat);  
     }
     message.chatId = chat.id;
-    chats.add(chat!);
+    chats.add(chat);
     int id = await _dataSource.addMessage(message);
     return "$id";
   }

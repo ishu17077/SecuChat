@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'package:chat/chat.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -98,7 +99,7 @@ class _MessageThreadState extends State<MessageThread>
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
-        if (chatId.isNotEmpty) {
+        if (chatId.isNotEmpty && mounted) {
           context
               .read<MessageThreadCubit>()
               .messages(chatId, forceRefresh: true)
@@ -258,18 +259,25 @@ class _MessageThreadState extends State<MessageThread>
         status: ReceiptStatus.read,
         time: DateTime.now(),
       );
-      chatId = chatId.isEmpty
-          ? messageThreadCubit.chatViewModel.chatId ??
-              messageThreadCubit.chatViewModel.chats
-                  .firstWhere((chat) => chat.userId == message.to)
-                  .id
-          : chatId;
-
+      try {
+        if (chatId.isEmpty) {
+          widget.chatsCubit.chats(forceRefresh: true);
+        }
+        chatId = chatId.isEmpty
+            ? messageThreadCubit.chatViewModel.chatId ??
+                messageThreadCubit.chatViewModel.chats
+                    .firstWhere((chat) => chat.userId == message.to)
+                    .id
+            : chatId;
+      } catch (e) {
+        debugPrint("chatid not found");
+      }
       String id = await messageThreadCubit.chatViewModel
           .sentMessage(message, status: ReceiptStatus.sending);
       var localMessage =
           LocalMessage(message, receipt, userId: widget.receiver.id!);
       localMessage.receipt = receipt;
+      localMessage.chatId = chatId;
       localMessage = _mapIdToLocalMessage(localMessage, id);
       localMessage.chatId = chatId;
       if (id.isNotEmpty) {
@@ -333,8 +341,9 @@ class _MessageThreadState extends State<MessageThread>
             recipientId: state.message.from,
             status: ReceiptStatus.delivered,
             time: DateTime.now());
-        await _sendReceipt(state.message, receipt);
-        await widget.chatsCubit.chats();
+        _sendReceipt(state.message, receipt);
+        messageThreadCubit.messages(chatId);
+        widget.chatsCubit.chats();
       } else if (state is MessageSentSuccess) {
         final receipt = Receipt(
             messageId: state.message.message.id!,
@@ -342,7 +351,9 @@ class _MessageThreadState extends State<MessageThread>
             status: ReceiptStatus.sent,
             time: DateTime.now());
         await messageThreadCubit.chatViewModel
-            .updateMessageReceipt(receipt, localMessageId: state.message.id)
+            .updateMessageReceipt(receipt,
+                localMessageId: state.message.id,
+                sMessage: state.message.message)
             .then((_) {
           messageThreadCubit.messages(chatId);
           widget.chatsCubit.chats();
@@ -355,7 +366,9 @@ class _MessageThreadState extends State<MessageThread>
             status: ReceiptStatus.sent,
             time: DateTime.now());
         await messageThreadCubit.chatViewModel
-            .updateMessageReceipt(receipt, localMessageId: state.message.id)
+            .updateMessageReceipt(receipt,
+                localMessageId: state.message.id,
+                sMessage: state.message.message)
             .then(
           (_) {
             messageThreadCubit.messages(chatId);
@@ -371,9 +384,11 @@ class _MessageThreadState extends State<MessageThread>
     context.read<ReceiptBloc>().stream.listen((state) async {
       if (state is ReceiptReceivedSuccess) {
         await messageThreadCubit.chatViewModel
-            .updateMessageReceipt(state.receipt);
-        messageThreadCubit.messages(chatId);
-        widget.chatsCubit.chats();
+            .updateMessageReceipt(state.receipt)
+            .then((_) {
+          messageThreadCubit.messages(chatId);
+          widget.chatsCubit.chats();
+        });
       }
     });
   }

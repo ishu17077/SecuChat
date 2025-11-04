@@ -82,24 +82,21 @@ class ChatViewModel extends BaseViewModel {
     if (localMessage.chatId != chatId) {
       otherMessages++;
     }
-    for (var chat in chats) {
-      if (chat.id == chatId) {
-        chat.unread = 0;
-        break;
-      }
-    }
+
     messages.insert(0, localMessage);
     await addMessage(localMessage);
   }
 
   Future<void> updateMessageReceipt(Receipt receipt,
-      {String? localMessageId}) async {
+      {String? localMessageId, Message? sMessage}) async {
     //TODO: Impl receipts wrong Impl
     //receipt.messageId is serverId
     if (localMessageId != null) {
+      assert(sMessage != null, "Sever Message cannot be null");
       for (LocalMessage message in messages) {
         if (message.id == localMessageId) {
           message.receipt = receipt;
+          message.message = sMessage!;
           break;
         }
       }
@@ -114,7 +111,7 @@ class ChatViewModel extends BaseViewModel {
         break;
       }
     }
-    _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
+    await _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
   }
 
   LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, String id) {
