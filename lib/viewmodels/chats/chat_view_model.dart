@@ -42,9 +42,10 @@ class ChatViewModel extends BaseViewModel {
           time: DateTime.now(),
         ),
         userId: message.to);
+    chatId ??= localMessage.chatId;
     if (chatId != null) {
       int id = await _dataSource.addMessage(localMessage);
-      localMessage = _mapIdToLocalMessage(localMessage, id);
+      localMessage = _mapIdToLocalMessage(localMessage, "$id");
 
       for (final chat in chats) {
         if (chat.from.id! == message.to) {
@@ -56,8 +57,11 @@ class ChatViewModel extends BaseViewModel {
       return localMessage.id;
     }
     //TODO: Transition from chat_id to user_id
+
+    final id = await addMessage(localMessage);
+    localMessage = _mapIdToLocalMessage(localMessage, id);
     messages.insert(0, localMessage);
-    return await addMessage(localMessage);
+    return id;
   }
 
   Future<void> recieveMessage(Message message) async {
@@ -113,7 +117,7 @@ class ChatViewModel extends BaseViewModel {
     _dataSource.updateMessageReceipt(receipt.messageId, receipt.status);
   }
 
-  LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, int id) {
+  LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, String id) {
     return LocalMessage.fromJSON({...localMessage.toJSON(), "id": id});
   }
 }
