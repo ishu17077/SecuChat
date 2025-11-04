@@ -240,6 +240,10 @@ class _MessageThreadState extends State<MessageThread>
 
   void _sendMessage() async {
     final text = _textEditingController.text.trim();
+    if (text.length > 2000) {
+      _textEditingController.clear();
+      return;
+    }
     if (text.isNotEmpty) {
       final iv = IV.fromSecureRandom(16);
       final Message message = Message(

@@ -15,14 +15,13 @@ class ChatHeader extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
+      // mainAxisSize: MainAxisSize.max,
       children: [
-        SizedBox(
-          child: Text(
-            username,
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-            style: const TextStyle(color: Colors.white70),
-          ),
+        Text(
+          username,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          style: const TextStyle(color: Colors.white70),
         ),
         AnimatedCrossFade(
           firstChild: const SizedBox(height: 0),
