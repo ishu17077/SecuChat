@@ -2,7 +2,7 @@
 
 <h3>To be updated soon<h3>
 
-[SecuChat](https://play.google.com/store/apps/details?id=com.developerik.secuchat)
+[SecuChat Download](https://play.google.com/store/apps/details?id=com.developerik.secuchat)
 
 ## Getting Started With Documentation
 
