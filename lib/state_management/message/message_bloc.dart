@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:chat/chat.dart';
+import 'package:encrypt/encrypt.dart';
 import 'package:equatable/equatable.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
@@ -24,6 +25,7 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
     on<MessageSend>((event, emit) async {
       emit(MessageSending(event.message.message));
       final nonEncryptedContents = event.message.message.contents;
+      event.message.message.iv = IV.fromSecureRandom(16);
       final encryptionKey =
           await _encryption.getChatAcmKey(event.message.message.to);
       if (event.message.message.iv != null && encryptionKey != null) {
