@@ -71,7 +71,6 @@ class _MessageThreadState extends State<MessageThread>
     count = 0;
     for (var message in messages) {
       if (message.receipt.status == ReceiptStatus.sending) {
-        message.message.iv = IV.fromSecureRandom(16);
         messageBloc.add(MessageEvent.onMessageResend(message));
       }
       var isMe = _isMe(message.message.from, widget.me.id!);
@@ -246,13 +245,12 @@ class _MessageThreadState extends State<MessageThread>
       return;
     }
     if (text.isNotEmpty) {
-      final iv = IV.fromSecureRandom(16);
       final Message message = Message(
-          from: widget.me.id!,
-          to: widget.receiver.id!,
-          contents: text,
-          time: DateTime.now(),
-          iv: iv);
+        from: widget.me.id!,
+        to: widget.receiver.id!,
+        contents: text,
+        time: DateTime.now(),
+      );
       final receipt = Receipt(
         messageId: "",
         recipientId: message.from,
