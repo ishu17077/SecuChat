@@ -375,7 +375,10 @@ class _MessageThreadState extends State<MessageThread>
             widget.chatsCubit.chats();
           },
         );
-      } else if (state is MessageSending) {}
+      } else if (state is MessageSending) {
+        messageThreadCubit.messages(chatId);
+        widget.chatsCubit.chats();
+      }
     });
   }
 
