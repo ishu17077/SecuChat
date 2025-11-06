@@ -322,11 +322,17 @@ class _HomeState extends State<Home>
 
   void _updateChatsOnMessageReceived() async {
     final chatsCubit = context.read<ChatsCubit>();
-
+    final receiptBloc = context.read<ReceiptBloc>();
     _messageSubscription = _messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
+        receiptBloc.add(ReceiptEvent.onMessageSent(Receipt(
+            messageId: state.message.id!,
+            recipientId: state.message.from,
+            status: ReceiptStatus.delivered,
+            time: DateTime.now())));
         (await chatsCubit.viewModel
             .receivedMessage(state.message.from, state.message));
+
         await chatsCubit.chats();
       }
     });

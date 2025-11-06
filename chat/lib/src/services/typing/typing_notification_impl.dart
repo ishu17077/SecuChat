@@ -1,15 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 
 class TypingNotification implements ITypingNotification {
-  final FirebaseFirestore _firebaseFirestore;
+  final FirebaseDatabase _firebaseDatabase;
   final StreamController<TypingEvent> _controller =
       StreamController<TypingEvent>.broadcast();
   StreamSubscription? _changeFeed;
 
-  TypingNotification(this._firebaseFirestore);
+  TypingNotification(this._firebaseDatabase);
 
   @override
   void dispose() {
@@ -18,47 +20,52 @@ class TypingNotification implements ITypingNotification {
   }
 
   @override
-  Future<bool> send(TypingEvent event) async {
-    final DocumentReference docRef = await _firebaseFirestore
-        .collection("typing_events")
-        .add(event.toJSON());
-    return docRef.id != null ? true : false;
+  Future<void> send(TypingEvent event) async {
+    final DatabaseReference docRef = _firebaseDatabase.ref("typing/");
+    await docRef.child(event.to).set({event.from: event.event.value()});
   }
 
   @override
   Stream<TypingEvent> subscribe({required User user, List<String>? userIds}) {
-    _changeFeed = _firebaseFirestore
-        .collection("typing_events")
-        // .where("from", arrayContains: userIds)
-        .where("to", isEqualTo: user.id)
-        .orderBy('time')
-        .snapshots()
-        .listen((event) {
-          event.docChanges.forEach((element) {
-            if (element.type == DocumentChangeType.added) {
-              final data = element.doc.data();
-              if (data == null) {
-                return;
-              }
-              final event = _mapIdToTypingEvent(element.doc.id, data);
-              _removingEvent(event);
-              _controller.sink.add(event);
-            }
-          });
-          return;
-        });
+    _changeFeed = _firebaseDatabase.ref("typing/${user.id!}").onValue.listen((
+      event,
+    ) {
+      if (event.type != DatabaseEventType.childRemoved) {
+        if (event.snapshot.value == null) return;
+        final objdata = jsonEncode(event.snapshot.value);
+        final data = jsonDecode(objdata) as Map<String, dynamic>;
+        for (var userId in data.keys) {
+          final TypingEvent event = TypingEvent(
+            from: userId.toString(),
+            to: user.id!,
+            event: TypingParser.fromString(data[userId].toString()),
+            time: DateTime.now(),
+          );
+          _controller.add(event);
+          _deleteTypingEvent(event.to, event.from);
+        }
+      }
+    });
     _changeFeed?.onError((error) {
       debugPrint(error.toString());
     });
     return _controller.stream;
   }
 
-  void _removingEvent(TypingEvent event) {
-    _firebaseFirestore.collection("typing_events").doc(event.id).delete();
-  }
+  // void _removingEvent(TypingEvent event) {
+  //   _firebaseDatabase.collection("typing_events").doc(event.id).delete();
+  // }
 
   TypingEvent _mapIdToTypingEvent(String id, Map<String, dynamic> event) {
     return TypingEvent.fromJSON({"id": id, ...event});
+  }
+
+  Future<void> _deleteTypingEvent(String receiver, String sender) async {
+    await _firebaseDatabase
+        .ref("typing/")
+        .child(receiver)
+        .child(sender)
+        .remove();
   }
 
   @override

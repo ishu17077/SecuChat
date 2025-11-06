@@ -3,6 +3,7 @@ import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -31,6 +32,7 @@ import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:secuchat/viewmodels/auth/email_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/auth/google_sign_in_view_model.dart';
+import 'package:secuchat/viewmodels/chats/base_view_model.dart';
 import 'package:secuchat/viewmodels/chats/chat_view_model.dart';
 import 'package:secuchat/viewmodels/chats/chats_view_model.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -42,6 +44,7 @@ import 'package:sqflite/sqflite.dart';
 
 class CompositionRoot {
   static late FirebaseFirestore _firebaseFirestore;
+  static late FirebaseDatabase _firebaseDatabase;
   static late FirebaseAuth _firebaseAuth;
   static late GoogleSignIn _googleSignIn;
   static late IUserService _userService;
@@ -61,6 +64,7 @@ class CompositionRoot {
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
   static late INotificationService _notificationService;
+  static late BaseViewModel _baseViewModel;
   static late HomeRouter _homeRouter;
   static late EncryptionViewmodel _encryptionViewmodel;
   static late FirebaseNotifications _firebaseNotifications;
@@ -68,13 +72,14 @@ class CompositionRoot {
   static Future<void> configure() async {
     await Firebase.initializeApp();
     _firebaseFirestore = FirebaseFirestore.instance;
+    _firebaseDatabase = FirebaseDatabase.instance;
     _firebaseAuth = FirebaseAuth.instance;
     _googleSignIn = GoogleSignIn.instance;
     _userService = UserService(_firebaseFirestore);
     _db = await LocalDatabaseFactory().getDatabase();
     _encryption = EncryptionService();
     _messageService = MessageService(_firebaseFirestore);
-    _typingNotification = TypingNotification(_firebaseFirestore);
+    _typingNotification = TypingNotification(_firebaseDatabase);
     _receiptService = ReceiptService(_firebaseFirestore);
     _dataSource = SqfliteDatasource(_db);
     final encryptedSharedPref = EncryptedSharedPreferences(
@@ -87,8 +92,9 @@ class CompositionRoot {
     _messageBloc = MessageBloc(_messageService, _encryptionViewmodel);
     _typingNotifBloc = TypingNotifBloc(_typingNotification);
     _receiptBloc = ReceiptBloc(_receiptService);
-    final viewModel = ChatsViewModel(_dataSource,
-        userService: _userService, encryption: _encryptionViewmodel);
+    _baseViewModel = BaseViewModel(_dataSource, _userService);
+    final viewModel =
+        ChatsViewModel(_baseViewModel, encryption: _encryptionViewmodel);
     _chatsCubit = ChatsCubit(viewModel);
     _homeCubit = HomeCubit(_userService, _localCache);
 
@@ -137,7 +143,7 @@ class CompositionRoot {
   static Widget composeMessageThreadUi(
       User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) {
-    final viewModel = ChatViewModel(_dataSource, _userService);
+    final viewModel = ChatViewModel(_baseViewModel);
     final messageThreadCubit = MessageThreadCubit(viewModel);
 
     return MultiBlocProvider(
@@ -147,7 +153,7 @@ class CompositionRoot {
         BlocProvider.value(value: _typingNotifBloc),
         BlocProvider.value(value: _messageBloc),
       ],
-      child: MessageThread(receiver, me, _chatsCubit,chatId: chatId ?? ''),
+      child: MessageThread(receiver, me, _chatsCubit, chatId: chatId ?? ''),
     );
   }
 

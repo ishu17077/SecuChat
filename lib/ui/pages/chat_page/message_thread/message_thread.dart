@@ -1,7 +1,5 @@
-import 'dart:async';
-import 'dart:ffi';
+import 'dart:async'; 
 import 'package:chat/chat.dart';
-import 'package:encrypt/encrypt.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
@@ -111,20 +109,15 @@ class _MessageThreadState extends State<MessageThread>
         break;
       case AppLifecycleState.inactive:
         print('AppCycleState inactive');
-
         break;
       case AppLifecycleState.paused:
         print('AppCycleState paused');
-        // _chatStream?.pause();
         break;
       case AppLifecycleState.detached:
         print('AppCycleState detached');
-        // _chatStream?.pause();
         break;
       case AppLifecycleState.hidden:
         print('AppCycleState hidden');
-        // _chatStream?.pause();
-        // _chatStream?.pause();
         break;
     }
   }
@@ -200,8 +193,7 @@ class _MessageThreadState extends State<MessageThread>
                 child: ChatTextField(
                   key: _textBoxChangeKey,
                   textEditingController: _textEditingController,
-                  // onChanged: _sendTypingNotification,
-                  onChanged: (changed) {},
+                  onChanged: _sendTypingNotification,
                   onSendButtonPressed: (String contents) async {
                     _sendMessage();
                   },
@@ -304,12 +296,10 @@ class _MessageThreadState extends State<MessageThread>
     }
     if (_startTypingTimer?.isActive ?? false) return;
     if (_stopTypingTimer?.isActive ?? false) _stopTypingTimer!.cancel();
-
     _dispatchTypingEvent(Typing.start);
-    _startTypingTimer = Timer(Duration(seconds: 8), () {});
-
+    _startTypingTimer = Timer(Duration(seconds: 4), () {});
     _stopTypingTimer =
-        Timer(Duration(seconds: 7), () => _dispatchTypingEvent(Typing.stop));
+        Timer(Duration(seconds: 3), () => _dispatchTypingEvent(Typing.stop));
   }
 
   void _dispatchTypingEvent(Typing typing) {

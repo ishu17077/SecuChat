@@ -36,6 +36,14 @@ android {
     compileSdk flutter.compileSdkVersion
     ndkVersion "29.0.13846066"
     
+    applicationVariants.all { variant ->
+        if (variant.buildType.name == "release") {
+            variant.outputs.all { output ->
+                def apkName = "SecuChat-${variant.versionName}-${variant.versionCode}-release.apk"
+                outputFileName = apkName
+            }
+        }
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -82,7 +90,7 @@ android {
             keyPassword keystoreProperties['keyPassword']
             storePassword keystoreProperties['storePassword']
             storeFile rootProject.file(keystoreProperties['storeFile'])
-
+            
         } else {
             throw new GradleException("key.properties file not found in ${keystorePropertiesFile.absolutePath}")
         }

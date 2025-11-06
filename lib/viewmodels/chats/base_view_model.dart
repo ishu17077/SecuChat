@@ -5,14 +5,14 @@ import 'package:secuchat/models/local_message.dart';
 import 'package:flutter/material.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
-abstract class BaseViewModel {
-  final IDataSource _dataSource;
-  final IUserService _userService;
+class BaseViewModel {
+  final IDataSource dataSource;
+  final IUserService userService;
   List<Chat> chats = [];
-  BaseViewModel(this._dataSource, this._userService);
+  BaseViewModel(this.dataSource, this.userService);
 
-  @protected
-  Future<String> addMessage(LocalMessage message) async {
+  Future<String> addMessage(LocalMessage message,
+      {String? currentChatId}) async {
     assert(message.chatId != null || message.userId != null,
         "Both user_id and chat_id cannot be null");
     //? Caching technique not accessing db
@@ -21,15 +21,15 @@ abstract class BaseViewModel {
         message.chatId = chat.id;
         chat.mostRecent = message;
         chat.messages.add(message);
-        chat.unread++;
-        int id = await _dataSource.addMessage(message);
+        chat.unread = currentChatId == chat.id ? chat.unread : chat.unread + 1;
+        int id = await dataSource.addMessage(message);
         return "$id";
       }
     }
     Chat? chat = await _getChat(userId: message.userId!);
 
     if (chat == null) {
-      final User? user = await _userService.fetchUserId(message.userId!);
+      final User? user = await userService.fetchUserId(message.userId!);
       if (user == null) {
         debugPrint("Cannot find user for id ${message.userId}");
         return "";
@@ -43,11 +43,11 @@ abstract class BaseViewModel {
       chat.mostRecent = message;
       chats.add(chat);
     } else {
-      chats.add(chat);  
+      chats.add(chat);
     }
     message.chatId = chat.id;
     chats.add(chat);
-    int id = await _dataSource.addMessage(message);
+    int id = await dataSource.addMessage(message);
     return "$id";
   }
 
@@ -58,15 +58,15 @@ abstract class BaseViewModel {
       String? groupId}) async {
     assert(chatId != null || userId != null || groupId != null,
         "user_id and chat_id cannot be null");
-    return await _dataSource.findChat(chatId: chatId, userId: userId);
+    return await dataSource.findChat(chatId: chatId, userId: userId);
   }
 
   Future<int> _createNewChat(String userId, User from) async {
     Chat chat = Chat(userId);
-    return await _dataSource.addChat(chat);
+    return await dataSource.addChat(chat);
   }
 
   Future<void> _createNewUser(User user) async {
-    await _dataSource.addUser(user);
+    await dataSource.addUser(user);
   }
 }

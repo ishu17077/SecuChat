@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart' hide Query;
 import 'package:mockito/annotations.dart';
 
 @GenerateNiceMocks([
@@ -10,5 +11,9 @@ import 'package:mockito/annotations.dart';
   MockSpec<Query<Map<String, dynamic>>>(),
   MockSpec<QueryDocumentSnapshot<Map<String, dynamic>>>(),
   MockSpec<DocumentChange<Map<String, dynamic>>>(),
+  MockSpec<FirebaseDatabase>(),
+  MockSpec<DatabaseReference>(),
+  MockSpec<DatabaseEvent>(),
+  MockSpec<DatabaseEventType>(),
 ])
 void main() {}

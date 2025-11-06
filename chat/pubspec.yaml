@@ -14,6 +14,7 @@ dependencies:
   cloud_firestore: ^6.0.1
   webcrypto: ^0.5.8
   encrypted_shared_preferences: ^3.0.1
+  firebase_database: ^12.0.4
 
 dev_dependencies:
   flutter_test:
