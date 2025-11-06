@@ -7,6 +7,7 @@ import 'package:secuchat/state_management/home/home_cubit.dart';
 import 'package:secuchat/state_management/home/home_state.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/ui/widgets/app_back_button.dart';
+import 'package:secuchat/ui/widgets/dev_container.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
@@ -69,6 +70,8 @@ class _NewChatState extends State<NewChat> {
         backgroundImage: NetworkImage(user.photoUrl ??
             'https://marmelab.com/images/blog/ascii-art-converter/homer.png'),
       ),
+      trailing:
+          user.id == "1oSLDBOyjANs6BsBURTV52aM5s33" ? DevContainer() : null,
       title: Text(
         user.name ?? '',
         style: const TextStyle(color: Colors.white),

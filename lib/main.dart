@@ -22,10 +22,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SecuChat',
       theme: ThemeData(
-        useMaterial3: true,
+        useMaterial3: false,
         brightness: Brightness.dark,
         primarySwatch: greenAndroid,
-      
         buttonTheme: const ButtonThemeData(
           buttonColor: Color(0xff0cf3e1),
         ),

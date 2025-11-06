@@ -1,4 +1,4 @@
-import 'dart:async'; 
+import 'dart:async';
 import 'package:chat/chat.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:secuchat/models/local_message.dart';
@@ -151,7 +151,6 @@ class _MessageThreadState extends State<MessageThread>
         // elevation: 10,
         title: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Hero(
@@ -169,9 +168,11 @@ class _MessageThreadState extends State<MessageThread>
                   state.typingEvent.event == Typing.start &&
                   state.typingEvent.from == widget.receiver.id;
 
-              return ChatHeader(
-                username: widget.receiver.name ?? '',
-                isTyping: isTyping,
+              return Flexible(
+                child: ChatHeader(
+                  username: widget.receiver.name ?? '',
+                  isTyping: isTyping,
+                ),
               );
             }),
           ],

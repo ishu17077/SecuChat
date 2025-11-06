@@ -13,6 +13,7 @@ import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
+import 'package:secuchat/ui/widgets/chat_tile.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -152,8 +153,14 @@ class _HomeState extends State<Home>
         SliverToBoxAdapter(child: SizedBox(height: 5)),
         SliverList(
             delegate: SliverChildBuilderDelegate(
-                (context, index) => chatTile(chats[index], context,
-                    unread: chats[index].unread),
+                (context, index) => ChatTile(chats[index], onTap: () async {
+                      setState(() {
+                        chats[index].unread = 0;
+                      });
+                      await this.widget.router.onShowMessageThread(context,
+                          chats[index].from, widget.me, widget.encryption,
+                          chatId: chats[index].id);
+                    }, unread: chats[index].unread),
                 childCount: chats.length))
       ],
       // body: Column(
@@ -252,71 +259,6 @@ class _HomeState extends State<Home>
           style: TextStyle(color: Colors.white),
         ),
       ),
-    );
-  }
-
-  Widget chatTile(Chat chat, BuildContext context, {int unread = 0}) {
-    return ListTile(
-      tileColor: kBackgroundColor,
-      splashColor: kSexyTealColor.withValues(alpha: 0.2),
-      leading: Hero(
-        tag: chat.id,
-        child: CircleAvatar(
-          backgroundImage: NetworkImage(chat.from?.photoUrl ??
-              'https://www.shutterstock.com/image-photo/red-text-any-questions-paper-600nw-2312396111.jpg'),
-        ),
-      ),
-      trailing: unread != 0
-          ? CircleAvatar(
-              backgroundColor: Colors.red,
-              maxRadius: 10,
-              child: Text("$unread", textScaler: TextScaler.linear(0.7)),
-            )
-          : null,
-      title: Text(
-        chat.from?.name ?? '',
-        style: const TextStyle(color: Colors.white),
-      ),
-      subtitle: BlocBuilder<TypingNotifBloc, TypingNotifState>(
-        builder: (_, state) {
-          //TODO: This implementaion doesn't need to be so big work on this
-          if (state is TypingReceivedSuccess &&
-              state.typingEvent.event == Typing.start &&
-              state.typingEvent.from == chat.from?.id) {
-            return Text(
-              "typing...",
-              style:
-                  TextStyle(color: Colors.green, fontStyle: FontStyle.italic),
-            );
-          } else if (state is TypingReceivedSuccess &&
-              state.typingEvent.event == Typing.stop &&
-              state.typingEvent.from == chat.from.id) {
-            return Text(
-              chat.mostRecent?.message.contents ?? '',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white70),
-            );
-          }
-
-          return Text(
-            chat.mostRecent?.message.contents ?? '',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white70),
-          );
-        },
-      ),
-      onTap: () async {
-        setState(() {
-          chat.unread = 0;
-        });
-        await this.widget.router.onShowMessageThread(
-            context, chat.from, widget.me, widget.encryption,
-            chatId: chat.id);
-      },
-      enabled: true,
-      enableFeedback: true,
     );
   }
 

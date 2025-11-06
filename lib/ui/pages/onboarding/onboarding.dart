@@ -201,6 +201,7 @@ class _OnboardingState extends State<Onboarding> {
   }
 
   Future<void> _connectWithGoogle() async {
+    if (isLoadingWithGoogle) return;
     final onboardingCubit = context.read<OnboardingCubit>();
     if (!isLoadingWithFacebook || !isLoadingWithGoogle) {
       isLoadingWithGoogle = true;
