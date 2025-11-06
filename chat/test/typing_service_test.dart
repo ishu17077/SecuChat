@@ -1,79 +1,48 @@
 import 'package:chat/chat.dart';
 import 'package:chat/src/services/typing/typing_notification_impl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'firebase_test.mocks.dart';
 import 'helpers.dart';
 
 void main() {
-  late final MockFirebaseFirestore firebaseFirestore;
-  late final MockCollectionReference collectionReference;
-  late final MockDocumentReference docRef;
-  late final MockDocumentChange docChange;
-  late final MockDocumentSnapshot documentSnapshot;
-  late final MockQuery query;
-  late final MockQuerySnapshot querySnapshot;
+  late final MockFirebaseDatabase firebaseDatabase;
+  late final MockDatabaseReference databaseReference;
+  late final MockDatabaseEvent databaseEvent;
+  late final MockDataSnapshot dataSnapshot;
   late final ITypingNotification sut;
+  late final Stream<MockDatabaseEvent> stream;
   final User user = User.fromJSON(userMap);
   setUpAll(() {
-    firebaseFirestore = MockFirebaseFirestore();
-    collectionReference = MockCollectionReference();
-    docRef = MockDocumentReference();
-    docChange = MockDocumentChange();
-    documentSnapshot = MockDocumentSnapshot();
-    querySnapshot = MockQuerySnapshot();
-    query = MockQuery();
-    sut = TypingNotification(firebaseFirestore);
+    firebaseDatabase = MockFirebaseDatabase();
+    databaseReference = MockDatabaseReference();
+    databaseEvent = MockDatabaseEvent();
+    dataSnapshot = MockDataSnapshot();
+    stream = Stream.value(databaseEvent);
+    sut = TypingNotification(firebaseDatabase);
+    when(firebaseDatabase.ref(any)).thenReturn(databaseReference);
     when(
-      firebaseFirestore.collection("typing_events"),
-    ).thenReturn(collectionReference);
-    when(
-      collectionReference.add(any),
-    ).thenAnswer((realInvocation) async => docRef);
-
-    when(collectionReference.where(any, isEqualTo: anyNamed('isEqualTo'))).thenReturn(query);
-    when(
-      collectionReference.orderBy(any, descending: anyNamed('descending')),
-    ).thenReturn(query);
-    when(
-      query.orderBy(any, descending: anyNamed('descending')),
-    ).thenReturn(query);
-    when(collectionReference.doc(any)).thenReturn(docRef);
-    when(
-      collectionReference.orderBy(any, descending: anyNamed('descending')),
-    ).thenReturn(query);
-    when(
-      query.orderBy(any, descending: anyNamed('descending')),
-    ).thenReturn(query);
-    when(
-      collectionReference.where(
-        "from",
-        arrayContains: anyNamed("arrayContains"),
-      ),
-    ).thenReturn(query);
-    when(query.where("to", isEqualTo: user.id)).thenReturn(query);
-    when(
-      query.snapshots(),
-    ).thenAnswer((realInvocation) => Stream.value(querySnapshot));
-    when(docChange.type).thenReturn(DocumentChangeType.added);
-    when(querySnapshot.docChanges).thenReturn([docChange]);
-    when(docChange.doc).thenReturn(documentSnapshot);
-    when(documentSnapshot.data()).thenReturn(typingEventMap);
+      databaseReference.child(any),
+    ).thenAnswer((realInvocation) => databaseReference);
+    when(databaseReference.onValue).thenAnswer((_) => stream);
+    when(databaseEvent.snapshot).thenReturn(dataSnapshot);
+    when(databaseEvent.type).thenReturn(DatabaseEventType.childAdded);
+    when(dataSnapshot.value).thenReturn({user.id: "start"});
   });
 
   group("Should send and recieve typing events", () {
     test("Should send typing event", () async {
-      when(documentSnapshot.id).thenReturn(user.id!);
-      final bool isSent = await sut.send(TypingEvent.fromJSON(typingEventMap));
-      verify(collectionReference.add(any)).called(1);
-      expect(isSent, true);
+      await sut.send(TypingEvent.fromJSON(typingEventMap));
+      verify(databaseReference.set(any)).called(1);
     });
 
     test("Should recieve typing events", () async {
       Stream<TypingEvent> typingEvents = sut.subscribe(user: user);
-      TypingEvent typingEvent = await typingEvents.first;
-      expect(typingEvent.id, typingEventMap["id"]);
+      verify(databaseReference.onValue).called(1);
+      final event = await typingEvents.first;
+      expect(event.from, user.id);
     });
   });
 }

@@ -14,6 +14,8 @@ import 'package:mockito/annotations.dart';
   MockSpec<FirebaseDatabase>(),
   MockSpec<DatabaseReference>(),
   MockSpec<DatabaseEvent>(),
-  MockSpec<DatabaseEventType>(),
+  MockSpec<DataSnapshot>(),
 ])
 void main() {}
+
+//! run mockito: flutter pub run build_runner build
