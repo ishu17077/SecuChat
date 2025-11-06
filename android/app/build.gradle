@@ -37,9 +37,10 @@ android {
     ndkVersion "29.0.13846066"
     
     applicationVariants.all { variant ->
-        if (variant.buildType.name == "release") {
+        if (variant.buildType.name == "release") { 
             variant.outputs.all { output ->
-                def apkName = "SecuChat-${variant.versionName}-${variant.versionCode}-release.apk"
+                def abiName = output.getFilter(com.android.build.OutputFile.ABI)
+                def apkName = "SecuChat-${variant.versionName}-${variant.versionCode}-${abiName}-release.apk"
                 outputFileName = apkName
             }
         }
