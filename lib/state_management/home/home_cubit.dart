@@ -12,7 +12,7 @@ class HomeCubit extends Cubit<HomeState> {
     final userJson = _localCache.fetch("USER");
     userJson["last_seen"] = DateTime.now();
     userJson["active"] = true;
-    
+
     final user = User.fromJSON(userJson);
     return user;
   }
@@ -20,6 +20,7 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> activeUsers(User user) async {
     emit(HomeLoading());
     final onlineUsers = await _userService.online();
+
     onlineUsers.removeWhere((element) => element.id == user.id);
     emit(HomeSuccess(onlineUsers));
   }

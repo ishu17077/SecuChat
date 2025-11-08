@@ -14,6 +14,7 @@ import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
+import 'package:secuchat/ui/widgets/app_search_bar.dart';
 import 'package:secuchat/ui/widgets/chat_tile.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home>
     with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   List<Chat> chats = [];
+  String _searchQuery = "";
   List<String> typingEvents = [];
   int count = 0;
   bool keepLoading = true;
@@ -140,12 +142,38 @@ class _HomeState extends State<Home>
                 ));
           }, builder: (context, chats) {
             this.chats = chats;
-            return _buildHome();
+            final List<Chat> filteredChats;
+            filteredChats = _searchChats(chats);
+            return _buildHome(filteredChats);
           }),
         ));
   }
 
-  Widget _buildHome() {
+  List<Chat> _searchChats(List<Chat> chats) {
+    if (_searchQuery.isEmpty) {
+      return chats;
+    } else {
+      final filteredChats = chats.where((chat) {
+        // 3. Use your filter logic (now fixed and lowercase)
+        if (chat.from.name.toLowerCase().contains(_searchQuery)) {
+          return true;
+        }
+        if (chat.from.username.toLowerCase().contains(_searchQuery)) {
+          return true;
+        }
+        if (chat.mostRecent != null &&
+            chat.mostRecent!.message.contents
+                .toLowerCase()
+                .contains(_searchQuery)) {
+          return true;
+        }
+        return false;
+      }).toList();
+      return filteredChats;
+    }
+  }
+
+  Widget _buildHome(List<Chat> chats) {
     return CustomScrollView(
       physics: BouncingScrollPhysics(),
       slivers: [
@@ -159,7 +187,7 @@ class _HomeState extends State<Home>
                       setState(() {
                         chats[index].unread = 0;
                       });
-                      await this.widget.router.onShowMessageThread(context,
+                      await widget.router.onShowMessageThread(context,
                           chats[index].from, widget.me, widget.encryption,
                           chatId: chats[index].id);
                     }, unread: chats[index].unread),
@@ -244,22 +272,13 @@ class _HomeState extends State<Home>
     return SliverToBoxAdapter(
       child: Padding(
         padding: EdgeInsetsGeometry.symmetric(horizontal: 10.0),
-        child: TextField(
-          showCursor: true,
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.zero,
-            fillColor: kTextFieldColor,
-            filled: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(40),
-              borderSide: BorderSide.none,
-            ),
-            prefixIcon: Icon(Icons.search_rounded, color: Colors.teal),
-            labelStyle: TextStyle(color: Colors.white),
-          ),
-          cursorColor: Colors.teal,
-          style: TextStyle(color: Colors.white),
-        ),
+        child: AppSearchBar(
+            title: "Search",
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value.toLowerCase();
+              });
+            }),
       ),
     );
   }

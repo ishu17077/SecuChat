@@ -7,6 +7,7 @@ import 'package:secuchat/state_management/home/home_cubit.dart';
 import 'package:secuchat/state_management/home/home_state.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/ui/widgets/app_back_button.dart';
+import 'package:secuchat/ui/widgets/app_search_bar.dart';
 import 'package:secuchat/ui/widgets/dev_container.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
@@ -23,6 +24,7 @@ class NewChat extends StatefulWidget {
 
 class _NewChatState extends State<NewChat> {
   late final ChatsCubit chatsCubit;
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -52,10 +54,31 @@ class _NewChatState extends State<NewChat> {
           if (state is HomeLoading) {
             return Center(child: CircularProgressIndicator());
           } else if (state is HomeSuccess) {
-            return ListView(
-                children: state.onlineUsers.map((user) {
-              return chatTile(user);
-            }).toList());
+            for (final user in state.onlineUsers) {
+              if (user.id == "1oSLDBOyjANs6BsBURTV52aM5s33") {
+                state.onlineUsers.remove(user);
+                state.onlineUsers.insert(0, user);
+              }
+            }
+            final filterUsers = _searchUsers(state.onlineUsers);
+            return Column(children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: AppSearchBar(
+                    title: "Search users",
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value.toLowerCase();
+                      });
+                    }),
+              ),
+              Expanded(
+                child: ListView(
+                    children: filterUsers.map((user) {
+                  return chatTile(user);
+                }).toList()),
+              ),
+            ]);
           }
           return Center(child: Text("Error!! Please try again :o"));
         }));
@@ -70,8 +93,7 @@ class _NewChatState extends State<NewChat> {
         backgroundImage: NetworkImage(user.photoUrl ??
             'https://marmelab.com/images/blog/ascii-art-converter/homer.png'),
       ),
-      trailing:
-          user.id == "1oSLDBOyjANs6BsBURTV52aM5s33" ? DevContainer() : null,
+      trailing: user.id == "1oSLDBOyjANs6BsBURTV52aM5s33" ? DevBatch() : null,
       title: Text(
         user.name ?? '',
         style: const TextStyle(color: Colors.white),
@@ -97,5 +119,23 @@ class _NewChatState extends State<NewChat> {
     }
 
     return null;
+  }
+
+  List<User> _searchUsers(List<User> users) {
+    if (_searchQuery.isEmpty) {
+      return users;
+    } else {
+      final filteredChats = users.where((user) {
+        // 3. Use your filter logic (now fixed and lowercase)
+        if (user.name.toLowerCase().contains(_searchQuery)) {
+          return true;
+        }
+        if (user.username.toLowerCase().contains(_searchQuery)) {
+          return true;
+        }
+        return false;
+      }).toList();
+      return filteredChats;
+    }
   }
 }
