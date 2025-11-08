@@ -43,24 +43,7 @@ class ChatViewModel {
         ),
         userId: message.to);
     chatId ??= localMessage.chatId;
-    for (final chat in baseViewModel.chats) {
-      if (chat.from.id! == message.to) {
-        chat.mostRecent = localMessage;
-        chat.unread = 0;
-        chat.messages.add(localMessage);
-        chatId = chat.id;
-      }
-    }
     localMessage.chatId = chatId;
-    if (localMessage.chatId != null) {
-      int id = await baseViewModel.dataSource.addMessage(localMessage);
-      localMessage = _mapIdToLocalMessage(localMessage, "$id");
-
-      this.messages.insert(0, localMessage);
-      return localMessage.id;
-    }
-    //TODO: Transition from chat_id to user_id
-
     final id =
         await baseViewModel.addMessage(localMessage, currentChatId: chatId);
     localMessage = _mapIdToLocalMessage(localMessage, id);
@@ -86,9 +69,8 @@ class ChatViewModel {
     if (localMessage.chatId != chatId) {
       otherMessages++;
     }
-
     messages.insert(0, localMessage);
-    await baseViewModel.addMessage(localMessage, currentChatId: chatId);
+    
   }
 
   Future<void> updateMessageReceipt(Receipt receipt,

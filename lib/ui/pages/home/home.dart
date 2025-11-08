@@ -6,6 +6,7 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/home/home_cubit.dart';
@@ -72,8 +73,9 @@ class _HomeState extends State<Home>
         context.read<TypingNotifBloc>().resume();
         _messageSubscription.resume();
         context.read<ReceiptBloc>().resume();
-
+        CompositionRoot.handleNotificationEvents();
         await context.read<ChatsCubit>().chats(forceRefresh: true);
+        CompositionRoot.removeAllNotifications();
         break;
       case AppLifecycleState.inactive:
         print('AppCycleState inactive');

@@ -22,12 +22,13 @@ class BaseViewModel {
         chat.mostRecent = message;
         chat.messages.add(message);
         chat.unread = currentChatId == chat.id ? chat.unread : chat.unread + 1;
+        chats.remove(chat);
+        chats.insert(0, chat);
         int id = await dataSource.addMessage(message);
         return "$id";
       }
     }
     Chat? chat = await _getChat(userId: message.userId!);
-
     if (chat == null) {
       final User? user = await userService.fetchUserId(message.userId!);
       if (user == null) {
@@ -41,12 +42,9 @@ class BaseViewModel {
       chat = Chat.fromJSON({"id": chatId, "user_id": message.userId});
       chat.from = user;
       chat.mostRecent = message;
-      chats.add(chat);
-    } else {
-      chats.add(chat);
     }
     message.chatId = chat.id;
-    chats.add(chat);
+    chats.insert(0, chat);
     int id = await dataSource.addMessage(message);
     return "$id";
   }

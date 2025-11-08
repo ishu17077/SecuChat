@@ -3,6 +3,7 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/foundation.dart';
 import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
@@ -21,45 +22,50 @@ import 'package:sqflite/sqflite.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await _miniCompositionRoot();
-  await _notificationService!.createTempNotif(694930);
-  final messages = await MessageService(FirebaseFirestore.instance)
-      .getMessages(activeUser: _user!);
-  print(messages);
-  messages.forEach((message) async {
-    //TODO: Impl specific functions
-    var user = await _datasource!.findUser(message.from);
-    var chat = await _datasource!.findChat(userId: message.from);
-    String? chatId = chat?.id;
-    if (user == null) {
-      user = await _userService!.fetchUserId(message.from);
+  try {
+    await _miniCompositionRoot();
+    await _notificationService!.createTempNotif(694930);
+    final messages = await MessageService(FirebaseFirestore.instance)
+        .getMessages(activeUser: _user!);
+    print(messages);
+    messages.forEach((message) async {
+      //TODO: Impl specific functions
+      var user = await _datasource!.findUser(message.from);
+      var chat = await _datasource!.findChat(userId: message.from);
+      String? chatId = chat?.id;
       if (user == null) {
-        return;
+        user = await _userService!.fetchUserId(message.from);
+        if (user == null) {
+          return;
+        }
+        await _datasource!.addUser(user);
       }
-      await _datasource!.addUser(user);
-    }
-    if (chat == null) {
-      chat = Chat(user.id!);
-      chat.from = user;
-      chatId = "${await _datasource!.addChat(chat)}";
-    }
+      if (chat == null) {
+        chat = Chat(user.id!);
+        chat.from = user;
+        chatId = "${await _datasource!.addChat(chat)}";
+      }
 
-    message.contents = await _decryptMessage(message);
+      message.contents = await _decryptMessage(message);
 
-    final receipt = Receipt(
-        messageId: message.id!,
-        recipientId: user!.id!,
-        status: ReceiptStatus.delivered,
-        time: DateTime.now());
+      final receipt = Receipt(
+          messageId: message.id!,
+          recipientId: user!.id!,
+          status: ReceiptStatus.delivered,
+          time: DateTime.now());
 
-    LocalMessage lMessage =
-        LocalMessage(message, receipt, userId: message.from, chatId: chatId!);
-    int id = await _datasource!.addMessage(lMessage);
-    lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), "id": id});
+      LocalMessage lMessage =
+          LocalMessage(message, receipt, userId: message.from, chatId: chatId!);
+      int id = await _datasource!.addMessage(lMessage);
+      lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), "id": id});
+      await _notificationService!.createNotification(chat, lMessage);
+      await _receiptService!.send(receipt);
+    });
     await _notificationService!.cancel(694930);
-    await _notificationService!.createNotification(chat, lMessage);
-    await _receiptService!.send(receipt);
-  });
+  } catch (e) {
+    print(e.toString());
+    await _notificationService!.cancel(694930);
+  }
 }
 
 Future<String> _decryptMessage(Message message) async {
@@ -92,12 +98,12 @@ Future<void> _miniCompositionRoot() async {
       EncryptionService(), _datasource!, _localCache!, _userService!);
   if (_notificationService == null) {
     _notificationService = AwesomeNotificationService(
-        AwesomeNotifications(),
-        _messageService!,
-        _datasource!,
-        _encryptionViewmodel!,
-        _localCache!,
-        navigatorKey);
+      AwesomeNotifications(),
+      _messageService!,
+      _datasource!,
+      _encryptionViewmodel!,
+      _localCache!,
+    );
     await _notificationService!.initialize();
   }
   _user ??= User.fromJSON(_localCache!.fetch("USER"));

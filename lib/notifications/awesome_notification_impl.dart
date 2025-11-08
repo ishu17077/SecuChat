@@ -5,56 +5,50 @@ import 'package:chat/chat.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter/material.dart';
 import 'package:secuchat/cache/local_cache.dart';
+import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/notifications/notification_service_contract.dart';
+import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 
+@pragma('vm:entry-point')
 class AwesomeNotificationService implements INotificationService {
+  static late IDataSource _datasource;
+  static late IMessageService _messageService;
+  static late ILocalCache _localCache;
+  static late EncryptionViewmodel _encryption;
+  static late AwesomeNotifications _awesomeNotifications;
   static AwesomeNotificationService? _instance;
-  final Map<int, List<Message>> notifMap = {};
-  final IDataSource _datasource;
-  final IMessageService _messageService;
-  final ILocalCache _localCache;
-  final EncryptionViewmodel _encryption;
-  static ReceivedAction? initialAction;
-  final AwesomeNotifications _awesomeNotifications;
-  final GlobalKey<NavigatorState> _navigationKey;
-  static final StreamController<Map<String, dynamic>> _notificationController =
-      StreamController<Map<String, dynamic>>.broadcast();
-
-  // Add getter for the stream
-  static Stream<Map<String, dynamic>> get notificationStream =>
-      _notificationController.stream;
-
-  AwesomeNotificationService._createInstance(
-    this._awesomeNotifications,
-    this._messageService,
-    this._datasource,
-    this._encryption,
-    this._localCache,
-    this._navigationKey,
-  );
 
 //! Singleton class
+
+  AwesomeNotificationService._createInstance(
+      IDataSource datasource,
+      IMessageService messageService,
+      ILocalCache localCache,
+      EncryptionViewmodel encryption,
+      AwesomeNotifications awesomeNotifications) {
+    _datasource = datasource;
+    _messageService = messageService;
+    _localCache = localCache;
+    _encryption = encryption;
+    _awesomeNotifications = awesomeNotifications;
+  }
+
   factory AwesomeNotificationService(
     AwesomeNotifications awesomeNotifications,
     IMessageService messageService,
     IDataSource datasource,
     EncryptionViewmodel encryption,
     ILocalCache localCache,
-    GlobalKey<NavigatorState> navKey,
   ) {
-    _instance ??= AwesomeNotificationService._createInstance(
-        awesomeNotifications,
-        messageService,
-        datasource,
-        encryption,
-        localCache,
-        navKey);
+    _instance ??= AwesomeNotificationService._createInstance(datasource,
+        messageService, localCache, encryption, awesomeNotifications);
     return _instance!;
   }
+
   @override
   Future<void> initialize() async {
     await _awesomeNotifications.initialize(null, <NotificationChannel>[
@@ -87,10 +81,6 @@ class AwesomeNotificationService implements INotificationService {
         ledColor: Colors.green,
       ),
     ]);
-    initialAction = await _awesomeNotifications
-        .getInitialNotificationAction(removeFromActionEvents: false)
-        .timeout(Durations.extralong4);
-
     await _awesomeNotifications.setListeners(
       onActionReceivedMethod: _onActionReceivedMethod,
       onNotificationCreatedMethod: _checkIfNotificationWithThatIdAlreadyExist,
@@ -134,6 +124,9 @@ class AwesomeNotificationService implements INotificationService {
         NotificationActionButton(
           key: "REPLY",
           label: "Reply",
+          actionType: ActionType.SilentAction,
+          enabled: true,
+
           requireInputText: true,
           // autoDismissible: true,
         ),
@@ -151,52 +144,28 @@ class AwesomeNotificationService implements INotificationService {
     await _awesomeNotifications.cancelAll();
   }
 
+  @override
+  Future<void> removeChatNotification(String chatId) async {
+    await _awesomeNotifications.cancelNotificationsByGroupKey("chat_$chatId");
+  }
+
   @pragma("vm:entry-point")
   static Future<void> _onActionReceivedMethod(
       ReceivedAction receivedAction) async {
     if (receivedAction.buttonKeyInput.isEmpty) {
-      final receiver = await _instance!._datasource!
-          .findUser(receivedAction.payload!["user.id"]!);
-      final me = User.fromJSON(_instance!._localCache.fetch("USER"));
-      //! If user is null for any unknown reason!
-      // if(user == null){
-      //   _instance.
-      // }
-      // navigatorKey.currentState?.push(MaterialPageRoute(
-      //   builder: (context) => CompositionRoot.composeMessageThreadUi(
-      //       receiver!, me, _instance!._encryption),
-      // ));
-      _notificationController.add({
-        'me': me!,
-        'receiver': receiver!,
-      });
+      final receiver =
+          await _datasource!.findUser(receivedAction.payload!["user.id"]!);
+      final me = User.fromJSON(_localCache.fetch("USER"));
+      navigatorKey.currentState?.push(MaterialPageRoute(
+        builder: (context) => CompositionRoot.composeMessageThreadUi(
+            receiver!, me, _encryption,
+            chatId: receivedAction.payload!["chat_id"]),
+      ));
 
-      // navigatorKey.currentState?.push(
-      //   MaterialPageRoute(
-      //     builder: (_) => CompositionRoot.composeMessageThreadUi(
-      //       receiver!,
-      //       me,
-      //       _instance!._encryption,
-      //     ),
-      //   ),
-      // );
-      // Zone.current.runUnaryGuarded((context) async {
-      //   navigatorKey.currentState?.pushAndRemoveUntil(
-      //     MaterialPageRoute(
-      //       builder: (_) => CompositionRoot.composeMessageThreadUi(
-      //         receiver!,
-      //         me,
-      //         _instance!._encryption,
-      //       ),
-      //     ),
-      //     (route) => route.isFirst,
-      //   );
-      // }, navigatorKey.currentContext!);
       return;
     }
 
-    print(receivedAction.payload);
-    var message = Message.fromJSON({
+    Message message = Message.fromJSON({
       'id': receivedAction.payload!['message_id'],
       'time': DateTime.now(),
       'from': receivedAction.payload!['to'],
@@ -219,8 +188,8 @@ class AwesomeNotificationService implements INotificationService {
     if (receivedAction.buttonKeyInput.isNotEmpty) {
       final uMessageC = message.contents;
       message.contents = receivedAction.buttonKeyInput;
-      message = await _instance!._encryptMessage(chat.userId, message);
-      message = await _instance!._messageService.send(message);
+      message = await _encryptMessage(chat.userId, message);
+      message = await _messageService.send(message);
       message.contents = uMessageC;
       var lMessage = LocalMessage(
           message,
@@ -231,7 +200,7 @@ class AwesomeNotificationService implements INotificationService {
               time: DateTime.now()),
           chatId: chat.id,
           userId: message.to);
-      int id = await _instance!._datasource.addMessage(lMessage);
+      int id = await _datasource.addMessage(lMessage);
       lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), 'id': id});
       _instance!.createNotification(chat, lMessage, silent: true);
     }
@@ -239,7 +208,7 @@ class AwesomeNotificationService implements INotificationService {
     return;
   }
 
-  Future<Message> _encryptMessage(String userId, Message message) async {
+  static Future<Message> _encryptMessage(String userId, Message message) async {
     final key = await _encryption.getChatAcmKey(userId);
     if (key == null) {
       message.iv = null;
@@ -265,6 +234,7 @@ class AwesomeNotificationService implements INotificationService {
               channelKey: 'status_channel',
               locked: true,
               notificationLayout: NotificationLayout.Default,
+              groupKey: 'status_updates_group',
               body: 'Securing your world for you....',
               title: "SecuChat"));
     } catch (e) {

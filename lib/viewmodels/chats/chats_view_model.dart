@@ -53,8 +53,9 @@ class ChatsViewModel {
             status: ReceiptStatus.delivered,
             time: DateTime.now()),
         userId: userId);
-    
+
     await baseViewModel.addMessage(localMessage);
+   
     return;
   }
 }

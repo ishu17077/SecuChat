@@ -49,6 +49,7 @@ class CompositionRoot {
   static late GoogleSignIn _googleSignIn;
   static late IUserService _userService;
   static late Database _db;
+  static late AwesomeNotifications _awesomeNotifications;
   static late IMessageService _messageService;
   static late ITypingNotification _typingNotification;
   static late IReceiptService _receiptService;
@@ -64,8 +65,10 @@ class CompositionRoot {
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
   static late INotificationService _notificationService;
+  static late FirebaseMessaging _firebaseMessaging;
   static late BaseViewModel _baseViewModel;
   static late HomeRouter _homeRouter;
+  static User? _user;
   static late EncryptionViewmodel _encryptionViewmodel;
   static late FirebaseNotifications _firebaseNotifications;
 
@@ -81,6 +84,7 @@ class CompositionRoot {
     _messageService = MessageService(_firebaseFirestore);
     _typingNotification = TypingNotification(_firebaseDatabase);
     _receiptService = ReceiptService(_firebaseFirestore);
+    _firebaseMessaging = FirebaseMessaging.instance;
     _dataSource = SqfliteDatasource(_db);
     final encryptedSharedPref = EncryptedSharedPreferences(
         prefs: await SharedPreferences.getInstance(),
@@ -104,14 +108,14 @@ class CompositionRoot {
         _userService, _localCache, _encryptionViewmodel);
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
-    final awesomeNotifications = AwesomeNotifications();
+    _awesomeNotifications = AwesomeNotifications();
     _notificationService = AwesomeNotificationService(
-        awesomeNotifications,
-        _messageService,
-        _dataSource,
-        _encryptionViewmodel,
-        _localCache,
-        navigatorKey);
+      _awesomeNotifications,
+      _messageService,
+      _dataSource,
+      _encryptionViewmodel,
+      _localCache,
+    );
 
     _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
     var status = await Permission.notification.status;
@@ -122,12 +126,14 @@ class CompositionRoot {
   }
 
   static Widget start() {
-    final user = _authViewModel.signedInUser;
-    return user != null ? composeHomeUi(user) : composeOnboardingUi();
+    _user = _authViewModel.signedInUser;
+
+    return _handleNavigation(_user);
   }
 
   static Widget composeHomeUi(User me) {
-    startNotificationService(me);
+    _startNotificationService(me);
+    removeAllNotifications();
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => _chatsCubit),
@@ -140,9 +146,16 @@ class CompositionRoot {
     );
   }
 
+  static void removeAllNotifications() {
+    _notificationService.cancelAll();
+  }
+
   static Widget composeMessageThreadUi(
       User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) {
+    if (chatId != null) {
+      _notificationService.removeChatNotification(chatId);
+    }
     final viewModel = ChatViewModel(_baseViewModel);
     final messageThreadCubit = MessageThreadCubit(viewModel);
 
@@ -175,11 +188,38 @@ class CompositionRoot {
     ], child: NewChat(me, _homeRouter, encryption));
   }
 
-  static void startNotificationService(User me) async {
-    final firebaseMessaging = FirebaseMessaging.instance;
-    _firebaseNotifications = FirebaseNotifications(firebaseMessaging, me);
+  static void _startNotificationService(User me) async {
+    _firebaseNotifications = FirebaseNotifications(_firebaseMessaging, me);
     await _firebaseNotifications.initNotifications();
     // await _notificationService.createTempNotif(999);
+  }
+
+  static Widget _handleNavigation(User? user) {
+    if (user != null) {
+      handleNotificationEvents();
+      // _awesomeNotifications.setListeners(onActionReceivedMethod: _checkPayload);
+    }
+    return user != null ? composeHomeUi(user) : composeOnboardingUi();
+  }
+
+  static void handleNotificationEvents() async {
+    final Future<ReceivedAction?> receivedAction =
+        _awesomeNotifications.getInitialNotificationAction();
+    receivedAction.then(_checkPayload);
+  }
+
+  static Future<void> _checkPayload(ReceivedAction? receivedAction) async {
+    if (receivedAction != null &&
+        receivedAction.payload != null &&
+        receivedAction.payload!["chat_id"] != null &&
+        receivedAction.payload!["user.id"] != null) {
+      final user =
+          await _dataSource.findUser(receivedAction.payload!["user.id"]!);
+      navigatorKey.currentState?.push(MaterialPageRoute(
+          builder: (context) => composeMessageThreadUi(
+              user!, _user!, _encryptionViewmodel,
+              chatId: user.id)));
+    }
   }
 
   // static Widget composeNotifications() {
