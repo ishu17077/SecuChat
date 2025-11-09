@@ -35,6 +35,7 @@ class _HomeState extends State<Home>
   List<Chat> chats = [];
   String _searchQuery = "";
   List<String> typingEvents = [];
+  late final FocusNode _searchBarFocusNode;
   int count = 0;
   bool keepLoading = true;
   late final StreamSubscription _messageSubscription;
@@ -47,6 +48,7 @@ class _HomeState extends State<Home>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _user = widget.me;
+    _searchBarFocusNode = FocusNode();
     _initialSetup();
   }
 
@@ -130,22 +132,25 @@ class _HomeState extends State<Home>
         backgroundColor: kBackgroundColor,
         body: SafeArea(
           //TODO: Impl do not build app bar and searchbar as it is costly
-          child:
-              BlocConsumer<ChatsCubit, List<Chat>>(listener: (context, chats) {
-            context.read<TypingNotifBloc>().add(TypingNotifEvent.subscribed(
-                  widget.me,
-                  userWithChats: chats
-                      .map((chat) => chat.from.id)
-                      .whereType<
-                          String>() //? Returns itearable of type string not string? which removes null
-                      .toList(),
-                ));
-          }, builder: (context, chats) {
-            this.chats = chats;
-            final List<Chat> filteredChats;
-            filteredChats = _searchChats(chats);
-            return _buildHome(filteredChats);
-          }),
+          child: GestureDetector(
+            onTap: () => _searchBarFocusNode.unfocus(),
+            child: BlocConsumer<ChatsCubit, List<Chat>>(
+                listener: (context, chats) {
+              context.read<TypingNotifBloc>().add(TypingNotifEvent.subscribed(
+                    widget.me,
+                    userWithChats: chats
+                        .map((chat) => chat.from.id)
+                        .whereType<
+                            String>() //? Returns itearable of type string not string? which removes null
+                        .toList(),
+                  ));
+            }, builder: (context, chats) {
+              this.chats = chats;
+              final List<Chat> filteredChats;
+              filteredChats = _searchChats(chats);
+              return _buildHome(filteredChats);
+            }),
+          ),
         ));
   }
 
@@ -184,6 +189,7 @@ class _HomeState extends State<Home>
         SliverList(
             delegate: SliverChildBuilderDelegate(
                 (context, index) => ChatTile(chats[index], onTap: () async {
+                      _searchBarFocusNode.unfocus();
                       setState(() {
                         chats[index].unread = 0;
                       });
@@ -274,6 +280,7 @@ class _HomeState extends State<Home>
         padding: EdgeInsetsGeometry.symmetric(horizontal: 10.0),
         child: AppSearchBar(
             title: "Search",
+            focusNode: _searchBarFocusNode,
             onChanged: (value) {
               setState(() {
                 _searchQuery = value.toLowerCase();

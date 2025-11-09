@@ -156,7 +156,7 @@ class CompositionRoot {
     if (chatId != null) {
       _notificationService.removeChatNotification(chatId);
     }
-    final viewModel = ChatViewModel(_baseViewModel);
+    final viewModel = ChatViewModel(_baseViewModel, chatId: chatId);
     final messageThreadCubit = MessageThreadCubit(viewModel);
 
     return MultiBlocProvider(

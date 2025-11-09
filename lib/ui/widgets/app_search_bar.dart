@@ -4,12 +4,19 @@ import 'package:secuchat/unit_components.dart';
 class AppSearchBar extends StatelessWidget {
   final String title;
   final Function(String) onChanged;
-  const AppSearchBar({required this.title, required this.onChanged, super.key});
+  final FocusNode? focusNode;
+  const AppSearchBar(
+      {required this.title,
+      required this.onChanged,
+      this.focusNode,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       showCursor: true,
+      autofocus: false,
+      focusNode: focusNode,
       decoration: InputDecoration(
         hintText: title,
         contentPadding: EdgeInsets.zero,

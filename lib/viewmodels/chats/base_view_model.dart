@@ -21,7 +21,7 @@ class BaseViewModel {
         message.chatId = chat.id;
         chat.mostRecent = message;
         chat.messages.add(message);
-        chat.unread = currentChatId == chat.id ? chat.unread : chat.unread + 1;
+        chat.unread = currentChatId == chat.id ? 0 : chat.unread + 1;
         chats.remove(chat);
         chats.insert(0, chat);
         int id = await dataSource.addMessage(message);
@@ -66,5 +66,10 @@ class BaseViewModel {
 
   Future<void> _createNewUser(User user) async {
     await dataSource.addUser(user);
+  }
+
+  void chatOpened(String? chatId) {
+    if (chatId == null) return;
+    chats.where((chat) => chat.id == chatId).first.unread = 0;
   }
 }

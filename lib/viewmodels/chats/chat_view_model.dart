@@ -11,11 +11,10 @@ import 'package:webcrypto/webcrypto.dart';
 class ChatViewModel {
   String? chatId;
   List<LocalMessage> messages = List.empty(growable: true);
-
   int otherMessages = 0;
   final BaseViewModel baseViewModel;
   List<Chat> get chats => baseViewModel.chats;
-  ChatViewModel(this.baseViewModel);
+  ChatViewModel(this.baseViewModel, {this.chatId});
 
   Future<List<LocalMessage>> getMessages(String chatId) async {
     //! Cache Layer
@@ -32,9 +31,12 @@ class ChatViewModel {
     if (messages.length != this.messages.length) this.messages = messages;
   }
 
-  Future<String> sentMessage(Message message, {ReceiptStatus? status}) async {
+  Future<String> sentMessage(Message message,
+      {ReceiptStatus? status, String? chatId}) async {
+    this.chatId ??= chatId;
     LocalMessage localMessage = LocalMessage(
         message,
+        chatId: chatId,
         Receipt(
           messageId: message.id ?? '',
           recipientId: message.to,
@@ -42,16 +44,16 @@ class ChatViewModel {
           time: DateTime.now(),
         ),
         userId: message.to);
-    chatId ??= localMessage.chatId;
-    localMessage.chatId = chatId;
-    final id =
-        await baseViewModel.addMessage(localMessage, currentChatId: chatId);
+
+    final id = await baseViewModel.addMessage(localMessage,
+        currentChatId: this.chatId);
     localMessage = _mapIdToLocalMessage(localMessage, id);
     messages.insert(0, localMessage);
     return id;
   }
 
-  Future<void> recieveMessage(Message message) async {
+  Future<void> recieveMessage(Message message, {String? chatId}) async {
+    this.chatId ??= chatId;
     LocalMessage localMessage = LocalMessage(
       message,
       Receipt(
@@ -64,13 +66,8 @@ class ChatViewModel {
     );
 
     //! CAUTION: Rare conflict if chatId is null, but shouldn't be the case
-    chatId ??= localMessage.chatId;
-
-    if (localMessage.chatId != chatId) {
-      otherMessages++;
-    }
+    baseViewModel.chatOpened(this.chatId);
     messages.insert(0, localMessage);
-    
   }
 
   Future<void> updateMessageReceipt(Receipt receipt,
