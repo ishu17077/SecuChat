@@ -3,6 +3,7 @@
 <h3>To be updated soon<h3>
 
 [SecuChat Play Store Download](https://play.google.com/store/apps/details?id=com.developerik.secuchat)
+
 [SecuChat Github Downlod](https://github.com/ishu17077/secuChat/releases/latest)
 
 ## Getting Started With Documentation
