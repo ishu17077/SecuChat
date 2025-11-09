@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:chat/chat.dart';
 import 'package:secuchat/data/constants/table_names.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
@@ -233,5 +235,10 @@ class SqfliteDatasource implements IDataSource {
       return true;
     }
     return false;
+  }
+
+  @override
+  String getDatabasePath() {
+    return _db.path;
   }
 }

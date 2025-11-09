@@ -39,9 +39,9 @@ class _HomeState extends State<Home>
   int count = 0;
   bool keepLoading = true;
   late final StreamSubscription _messageSubscription;
-  bool shouldHideTextField = false;
   late User _user;
   late final _messageBloc = context.read<MessageBloc>();
+  bool _isInBackground = false;
 
   @override
   void initState() {
@@ -68,7 +68,7 @@ class _HomeState extends State<Home>
 
   @override
   bool get wantKeepAlive => true;
-  bool _isInBackground = false;
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
@@ -79,7 +79,6 @@ class _HomeState extends State<Home>
         context.read<TypingNotifBloc>().resume();
         _messageSubscription.resume();
         context.read<ReceiptBloc>().resume();
-        CompositionRoot.handleNotificationEvents();
         await context.read<ChatsCubit>().chats(forceRefresh: true);
         CompositionRoot.removeAllNotifications();
         break;
@@ -125,7 +124,6 @@ class _HomeState extends State<Home>
   void didChangeDependencies() {
     // _chatStream?.resume();
     // updateListView();
-    
 
     super.didChangeDependencies();
   }

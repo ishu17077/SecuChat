@@ -1,4 +1,9 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
@@ -6,8 +11,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ManageStorage extends StatefulWidget {
   final AuthViewModel _authViewModel;
-  const ManageStorage({required AuthViewModel authViewModel, super.key})
-      : _authViewModel = authViewModel;
+  final IDataSource _dataSource;
+  ManageStorage(
+      {required AuthViewModel authViewModel,
+      required IDataSource dataSource,
+      super.key})
+      : _authViewModel = authViewModel,
+        _dataSource = dataSource;
 
   @override
   State<ManageStorage> createState() => _ManageStorageState();
@@ -18,6 +28,8 @@ class _ManageStorageState extends State<ManageStorage> {
   bool _isRegenerateButtonLoading = false;
   bool _clearAllChatsButtonLoading = false;
   bool _chatsCleared = false;
+  bool _exportChatsLoading = false;
+  bool _chatsExported = false;
 
   @override
   void initState() {
@@ -91,7 +103,7 @@ class _ManageStorageState extends State<ManageStorage> {
                   widthImage: 38.0,
                   onPressed: () async => await _exportChats(),
                 ),
-                _isRegenerateButtonLoading
+                _clearAllChatsButtonLoading
                     ? const Center(
                         heightFactor: 1.4, child: CircularProgressIndicator())
                     : const SizedBox(height: 0.0, width: 0.0)
@@ -230,7 +242,9 @@ class _ManageStorageState extends State<ManageStorage> {
   }
 
   Future<void> _regenerateEncryptionKeys() async {
-    if (_isRegenerateButtonLoading || _clearAllChatsButtonLoading) return;
+    if (_isRegenerateButtonLoading ||
+        _clearAllChatsButtonLoading ||
+        _exportChatsLoading) return;
     if (_keyRegenerated) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Keys have been already regenerated!!")));
@@ -257,5 +271,45 @@ class _ManageStorageState extends State<ManageStorage> {
     }
   }
 
-  Future<void> _exportChats() async {}
+  Future<void> _exportChats() async {
+    if (_isRegenerateButtonLoading ||
+        _clearAllChatsButtonLoading ||
+        _exportChatsLoading) return;
+    _exportChatsLoading = true;
+    try {
+      // if (!(await _requestStoragePermission())) {
+      //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      //       content: Text("Allow storage permission to export the database!")));
+      //   return;
+      // }
+      final dbPath = widget._dataSource.getDatabasePath();
+      final outputPath = await FilePicker.platform.saveFile(
+          dialogTitle: "Please select output file to save database",
+          fileName: "secuchatDb.db",
+          bytes: await File(dbPath).readAsBytes(),
+          type: FileType.custom);
+      if (outputPath == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Unable to save database!")));
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("File saved!")));
+      }
+    } catch (e) {
+      print("An error occurred while saving the file: $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Unable to save database!")));
+    } finally {
+      _exportChatsLoading = false;
+    }
+  }
+
+  Future<bool> _requestStoragePermission() async {
+    var status = await Permission.storage.status;
+    if (status == PermissionStatus.denied) {
+      await Permission.storage.request();
+      status = await Permission.storage.status; // Re-check status after request
+    }
+    return status.isGranted;
+  }
 }

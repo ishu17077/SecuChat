@@ -52,21 +52,22 @@ class ChatViewModel {
     return id;
   }
 
-  Future<void> recieveMessage(Message message, {String? chatId}) async {
+  Future<void> recieveMessage(Message message,
+      {String? chatId, ReceiptStatus? receiptStatus}) async {
     this.chatId ??= chatId;
     LocalMessage localMessage = LocalMessage(
       message,
       Receipt(
         messageId: message.id!,
         recipientId: message.to,
-        status: ReceiptStatus.read,
+        status: receiptStatus ?? ReceiptStatus.read,
         time: DateTime.now(),
       ),
       userId: message.from,
     );
     //! CAUTION: Rare conflict if chatId is null, but shouldn't be the case
-    baseViewModel.chatOpened(this.chatId);
-    
+    if (receiptStatus == null || receiptStatus == ReceiptStatus.read)
+      baseViewModel.chatOpened(this.chatId);
 
     messages.insert(0, localMessage);
   }

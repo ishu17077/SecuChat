@@ -69,7 +69,7 @@ class CompositionRoot {
   static late AuthViewModel _authViewModel;
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
-  static late INotificationService _notificationService;
+  static late INotificationService notificationService;
   static late FirebaseMessaging _firebaseMessaging;
   static late BaseViewModel _baseViewModel;
   static late HomeRouter _homeRouter;
@@ -114,7 +114,7 @@ class CompositionRoot {
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     _awesomeNotifications = AwesomeNotifications();
-    _notificationService = AwesomeNotificationService(
+    notificationService = AwesomeNotificationService(
       _awesomeNotifications,
       _messageService,
       _dataSource,
@@ -158,14 +158,14 @@ class CompositionRoot {
   }
 
   static void removeAllNotifications() {
-    _notificationService.cancelAll();
+    notificationService.cancelAll();
   }
 
   static Widget composeMessageThreadUi(
       User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) {
     if (chatId != null) {
-      _notificationService.removeChatNotification(chatId);
+      notificationService.removeChatNotification(chatId);
     }
     final viewModel = ChatViewModel(_baseViewModel, chatId: chatId);
     final messageThreadCubit = MessageThreadCubit(viewModel);
@@ -235,11 +235,12 @@ class CompositionRoot {
 
   static Future<void> createNotification(
       Chat chat, LocalMessage message) async {
-    await _notificationService.createNotification(chat, message);
+    await notificationService.createNotification(chat, message);
   }
 
   static Widget composeManageStorageUi() {
-    return ManageStorage(authViewModel: _authViewModel);
+    return ManageStorage(
+        authViewModel: _authViewModel, dataSource: _dataSource);
   }
 
   // static Widget composeNotifications() {

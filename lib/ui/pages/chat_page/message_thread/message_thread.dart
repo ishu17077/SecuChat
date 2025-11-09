@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:chat/chat.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/state_management/home/chats_cubit.dart';
 import 'package:secuchat/state_management/message/message_bloc.dart';
@@ -32,6 +33,7 @@ class _MessageThreadState extends State<MessageThread>
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
   late final messageThreadCubit = context.read<MessageThreadCubit>();
+  bool _isInBackground = false;
   late final messageBloc = context.read<MessageBloc>();
   late final typingNotifBloc = context.read<TypingNotifBloc>();
   late final MessageThreadCubit _messageThreadCubit;
@@ -71,11 +73,11 @@ class _MessageThreadState extends State<MessageThread>
       if (message.receipt.status == ReceiptStatus.sending) {
         messageBloc.add(MessageEvent.onMessageResend(message));
       }
-      var isMe = _isMe(message.message.from, widget.me.id!);
+      bool isMe = _isMe(message.message.from, widget.me.id!);
       if (!isMe && message.receipt.status != ReceiptStatus.read) {
         _sendReceipt(message.message, message.receipt);
       }
-      if (!isMe && count++ == 25) return;
+      if (!isMe && count++ >= 25) return;
     }
   }
 
@@ -96,27 +98,32 @@ class _MessageThreadState extends State<MessageThread>
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
+        _isInBackground = false;
         if (chatId.isNotEmpty && mounted) {
-          context
-              .read<MessageThreadCubit>()
-              .messages(chatId, forceRefresh: true)
-              .then(
-            (value) {
+          messageThreadCubit.messages(chatId, forceRefresh: true).then(
+            (_) {
               _updateInitialReceipts();
             },
           );
+        }
+
+        if (chatId.isNotEmpty) {
+          CompositionRoot.notificationService.removeChatNotification(chatId);
         }
         break;
       case AppLifecycleState.inactive:
         print('AppCycleState inactive');
         break;
       case AppLifecycleState.paused:
+        _isInBackground = true;
         print('AppCycleState paused');
         break;
       case AppLifecycleState.detached:
+        _isInBackground = true;
         print('AppCycleState detached');
         break;
       case AppLifecycleState.hidden:
+        _isInBackground = true;
         print('AppCycleState hidden');
         break;
     }
@@ -170,10 +177,12 @@ class _MessageThreadState extends State<MessageThread>
             SizedBox(width: MediaQuery.of(context).size.width * 0.05),
             BlocBuilder<TypingNotifBloc, TypingNotifState>(
                 builder: (context, state) {
-              final isTyping = state is TypingReceivedSuccess &&
+              bool isTyping = state is TypingReceivedSuccess &&
                   state.typingEvent.event == Typing.start &&
                   state.typingEvent.from == widget.receiver.id;
-
+              if (isTyping) {
+                Future.delayed(Duration(seconds: 5), () => isTyping = false);
+              }
               return Flexible(
                 child: ChatHeader(
                   username: widget.receiver.name ?? '',
@@ -334,11 +343,14 @@ class _MessageThreadState extends State<MessageThread>
           messageThreadCubit.chatViewModel.otherMessages++;
           return;
         }
-        await messageThreadCubit.chatViewModel.recieveMessage(state.message);
+        await messageThreadCubit.chatViewModel.recieveMessage(state.message,
+            receiptStatus:
+                _isInBackground ? ReceiptStatus.delivered : ReceiptStatus.read);
         final receipt = Receipt(
             messageId: state.message.id!,
             recipientId: state.message.from,
-            status: ReceiptStatus.delivered,
+            status:
+                _isInBackground ? ReceiptStatus.delivered : ReceiptStatus.read,
             time: DateTime.now());
         _sendReceipt(state.message, receipt);
         messageThreadCubit.messages(chatId);
