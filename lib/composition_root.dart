@@ -14,6 +14,8 @@ import 'package:secuchat/cache/local_cache.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/data/datasources/sqflite_datasource_impl.dart';
 import 'package:secuchat/data/factories/db_factory_impl.dart';
+import 'package:secuchat/models/chat.dart';
+import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/notifications/awesome_notification_impl.dart';
 import 'package:secuchat/notifications/firebase_api.dart';
 import 'package:secuchat/notifications/notification_service_contract.dart';
@@ -229,6 +231,11 @@ class CompositionRoot {
               user!, _user!, _encryptionViewmodel,
               chatId: user.id)));
     }
+  }
+
+  static Future<void> createNotification(
+      Chat chat, LocalMessage message) async {
+    await _notificationService.createNotification(chat, message);
   }
 
   static Widget composeManageStorageUi() {

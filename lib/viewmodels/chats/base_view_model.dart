@@ -1,4 +1,5 @@
 import 'package:chat/chat.dart';
+import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
@@ -12,7 +13,7 @@ class BaseViewModel {
   BaseViewModel(this.dataSource, this.userService);
 
   Future<String> addMessage(LocalMessage message,
-      {String? currentChatId}) async {
+      {String? currentChatId, bool showNotification = false}) async {
     assert(message.chatId != null || message.userId != null,
         "Both user_id and chat_id cannot be null");
     //? Caching technique not accessing db
@@ -25,6 +26,8 @@ class BaseViewModel {
         chats.remove(chat);
         chats.insert(0, chat);
         int id = await dataSource.addMessage(message);
+        message = mapIdToLocalMessage(message, "$id");
+        if (showNotification) CompositionRoot.createNotification(chat, message);
         return "$id";
       }
     }
@@ -46,6 +49,8 @@ class BaseViewModel {
     message.chatId = chat.id;
     chats.insert(0, chat);
     int id = await dataSource.addMessage(message);
+    message = mapIdToLocalMessage(message, "$id");
+    if (showNotification) CompositionRoot.createNotification(chat, message);
     return "$id";
   }
 
@@ -71,5 +76,10 @@ class BaseViewModel {
   void chatOpened(String? chatId) {
     if (chatId == null) return;
     chats.where((chat) => chat.id == chatId).first.unread = 0;
+  }
+
+  static LocalMessage mapIdToLocalMessage(
+      LocalMessage localMessage, String id) {
+    return LocalMessage.fromJSON({...localMessage.toJSON(), "id": id});
   }
 }

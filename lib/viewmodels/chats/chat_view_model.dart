@@ -64,9 +64,10 @@ class ChatViewModel {
       ),
       userId: message.from,
     );
-
     //! CAUTION: Rare conflict if chatId is null, but shouldn't be the case
     baseViewModel.chatOpened(this.chatId);
+    
+
     messages.insert(0, localMessage);
   }
 

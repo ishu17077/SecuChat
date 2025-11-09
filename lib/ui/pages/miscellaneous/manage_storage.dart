@@ -167,7 +167,7 @@ class _ManageStorageState extends State<ManageStorage> {
                       scheme: 'mailto',
                       path: 'devsrayash@gmail.com',
                       queryParameters: {
-                        "subject": "Error working",
+                        "subject": "Error",
                         'body': '',
                       },
                     );

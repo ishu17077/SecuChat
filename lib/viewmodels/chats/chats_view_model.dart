@@ -44,7 +44,8 @@ class ChatsViewModel {
     if (chats.length != baseViewModel.chats.length) baseViewModel.chats = chats;
   }
 
-  Future<void> receivedMessage(String userId, Message message) async {
+  Future<void> receivedMessage(String userId, Message message,
+      {bool showNotification = false}) async {
     LocalMessage localMessage = LocalMessage(
         message,
         Receipt(
@@ -54,8 +55,9 @@ class ChatsViewModel {
             time: DateTime.now()),
         userId: userId);
 
-    await baseViewModel.addMessage(localMessage);
-   
+    await baseViewModel.addMessage(localMessage,
+        showNotification: showNotification);
+
     return;
   }
 }

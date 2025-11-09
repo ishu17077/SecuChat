@@ -68,10 +68,12 @@ class _HomeState extends State<Home>
 
   @override
   bool get wantKeepAlive => true;
+  bool _isInBackground = false;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
     switch (state) {
       case AppLifecycleState.resumed:
+        _isInBackground = false;
         print('AppCycleState resumed');
         context.read<MessageBloc>().resume();
         context.read<TypingNotifBloc>().resume();
@@ -86,7 +88,7 @@ class _HomeState extends State<Home>
 
         break;
       case AppLifecycleState.paused:
-        context.read<MessageBloc>().pause();
+        _isInBackground = true;
         context.read<TypingNotifBloc>().pause();
         _messageSubscription.resume();
         context.read<ReceiptBloc>().pause();
@@ -112,6 +114,10 @@ class _HomeState extends State<Home>
     // _chatStream?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _messageSubscription.cancel();
+    context.read<MessageBloc>().close();
+    context.read<TypingNotifBloc>().close();
+    context.read<ReceiptBloc>().close();
+    _searchBarFocusNode.dispose();
     super.dispose();
   }
 
@@ -119,6 +125,7 @@ class _HomeState extends State<Home>
   void didChangeDependencies() {
     // _chatStream?.resume();
     // updateListView();
+    
 
     super.didChangeDependencies();
   }
@@ -234,7 +241,7 @@ class _HomeState extends State<Home>
                 Text(
                   "Conversations",
                   style: TextStyle(
-                    fontSize: 35,
+                    fontSize: MediaQuery.of(context).size.width * 0.09,
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
@@ -300,9 +307,9 @@ class _HomeState extends State<Home>
             recipientId: state.message.from,
             status: ReceiptStatus.delivered,
             time: DateTime.now())));
-        (await chatsCubit.viewModel
-            .receivedMessage(state.message.from, state.message));
-
+        (await chatsCubit.viewModel.receivedMessage(
+            state.message.from, state.message,
+            showNotification: _isInBackground));
         await chatsCubit.chats();
       }
     });

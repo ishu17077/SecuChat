@@ -13,6 +13,7 @@ import 'package:secuchat/ui/pages/chat_page/message_thread/components/chat_text_
 import 'package:secuchat/ui/widgets/app_back_button.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:flutter/material.dart';
+import 'package:secuchat/viewmodels/chats/base_view_model.dart';
 
 class MessageThread extends StatefulWidget {
   final User receiver;
@@ -28,12 +29,10 @@ class MessageThread extends StatefulWidget {
 
 class _MessageThreadState extends State<MessageThread>
     with WidgetsBindingObserver {
-  late User? signedInUser;
   final TextEditingController _textEditingController = TextEditingController();
   double heightOfTextField = 0;
   late final messageThreadCubit = context.read<MessageThreadCubit>();
   late final messageBloc = context.read<MessageBloc>();
-  // late final chatsCubit = widget.chatsCubit;
   late final typingNotifBloc = context.read<TypingNotifBloc>();
   late final MessageThreadCubit _messageThreadCubit;
   int count = 0;
@@ -57,9 +56,10 @@ class _MessageThreadState extends State<MessageThread>
             widget.me,
             userWithChats: [receiver.id!]))
         : null;
+    _updateInitialReceipts();
     _updateOnMessageReceived();
     _updateOnReceiptReceived();
-    _updateInitialReceipts();
+
     //! _mystream was seperately assigned as it was changing with everytime something happens like a keyboard pop up lol, and that was bad like horrible, we need bloc
     super.initState();
   }
@@ -131,19 +131,25 @@ class _MessageThreadState extends State<MessageThread>
         scrolledUnderElevation: 0.0,
 
         forceMaterialTransparency: true,
-        leading: Stack(
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            //_messageThreadCubit.chatViewModel.otherMessages != 0
-            //     ? CircleAvatar(
-            //         backgroundColor: Colors.red,
-            //         child: Text(
-            //           "${context.read<MessageThreadCubit>().chatViewModel.otherMessages}",
-            //           textScaler: TextScaler.linear(0.5),
-            //         ),
-            //       )
-            //     : SizedBox(),
             AppBackButton(
               onPressed: () => navigatorKey.currentState?.pop(),
+            ),
+            BlocBuilder<MessageBloc, MessageState>(
+              builder: (context, state) {
+                if (state is MessageReceivedSuccess &&
+                    state.message.from != receiver.id) {
+                  return _messageThreadCubit.chatViewModel.otherMessages != 0
+                      ? CircleAvatar(
+                          backgroundColor: Colors.red,
+                          maxRadius: 4,
+                        )
+                      : SizedBox();
+                }
+                return SizedBox();
+              },
             ),
           ],
         ),
@@ -269,7 +275,7 @@ class _MessageThreadState extends State<MessageThread>
           LocalMessage(message, receipt, userId: widget.receiver.id!);
       localMessage.receipt = receipt;
       localMessage.chatId = chatId;
-      localMessage = _mapIdToLocalMessage(localMessage, id);
+      localMessage = BaseViewModel.mapIdToLocalMessage(localMessage, id);
       localMessage.chatId = chatId;
       if (id.isNotEmpty) {
         messageBloc.add(MessageEvent.onMessageSent(localMessage));
@@ -324,6 +330,10 @@ class _MessageThreadState extends State<MessageThread>
     }
     subscription = messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
+        if (state.message.from != widget.receiver.id) {
+          messageThreadCubit.chatViewModel.otherMessages++;
+          return;
+        }
         await messageThreadCubit.chatViewModel.recieveMessage(state.message);
         final receipt = Receipt(
             messageId: state.message.id!,
@@ -383,10 +393,6 @@ class _MessageThreadState extends State<MessageThread>
         });
       }
     });
-  }
-
-  LocalMessage _mapIdToLocalMessage(LocalMessage localMessage, String id) {
-    return LocalMessage.fromJSON({...localMessage.toJSON(), "id": id});
   }
 
 //TODO: Impl Async Encryption
