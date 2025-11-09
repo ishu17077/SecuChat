@@ -58,7 +58,7 @@ class AuthViewModel {
     // }
     try {
       final connectedUser = await _userService.connect(user);
-      await _localCache.save("USER", data: connectedUser.toJSON());
+      await _localCache.save("USER", data: connectedUser!.toJSON());
 
       return connectedUser;
     } catch (e) {
@@ -83,5 +83,15 @@ class AuthViewModel {
     _localCache.clear("USER");
     _localCache.clear("PRIVATE_KEY");
     await auth.signOut();
+  }
+
+  Future<User?> regenerateEncryption() async {
+    final userMap = _localCache.fetch("USER");
+    if (userMap.isEmpty) throw Exception("No user signed in!");
+    final user = User.fromJSON(userMap);
+    user.publicKeyJwb = await encryptionViewmodel.generateKeys();
+    await _localCache.save("USER", data: user.toJSON());
+    final userFromServer = await _userService.connect(user);
+    return userFromServer;
   }
 }

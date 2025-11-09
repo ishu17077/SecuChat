@@ -40,7 +40,7 @@ void main() {
       final connectedUser = await sut.connect(user);
       verify(collectionReference.doc(any)).called(2);
       verify(documentReference.update(any)).called(1);
-      expect(connectedUser.id, user.id);
+      expect(connectedUser!.id, user.id);
     });
 
     test("Should disconnect user", () async {

@@ -29,7 +29,11 @@ class MyApp extends StatelessWidget {
           buttonColor: Color(0xff0cf3e1),
         ),
       ),
-      home: CompositionRoot.start(),
+      initialRoute: "/",
+      routes: {
+        "/": (context) => CompositionRoot.start(),
+        "/manage-storage": (_) => CompositionRoot.composeManageStorageUi(),
+      },
     );
   }
 }

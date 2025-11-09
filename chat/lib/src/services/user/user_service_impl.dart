@@ -9,25 +9,29 @@ class UserService implements IUserService {
   const UserService(this._firebaseFirestore);
 
   @override
-  Future<User> connect(User user) async {
+  Future<User?> connect(User user) async {
     assert(user.id != null, "User id cannot be null");
-    final userPresent = await fetchUserId(user.id!);
-    user.active = true;
-    user.lastSeen = DateTime.now();
-    if (userPresent != null && (user.publicKeyJwb != null)) {
-      userPresent.publicKeyJwb = user.publicKeyJwb;
-    }
-    if (userPresent == null) {
-      return await _registerUserToDatabase(user);
-    }
+    try {
+      final userPresent = await fetchUserId(user.id!);
+      user.active = true;
+      user.lastSeen = DateTime.now();
+      if (userPresent != null && (user.publicKeyJwb != null)) {
+        userPresent.publicKeyJwb = user.publicKeyJwb;
+      }
+      if (userPresent == null) {
+        return await _registerUserToDatabase(user);
+      }
 
-    var userMap = userPresent.toJSON();
+      var userMap = userPresent.toJSON();
 
-    final DocumentReference docRef = _firebaseFirestore
-        .collection("users")
-        .doc(userPresent.id!);
-    await docRef.update(userMap);
-    return userPresent;
+      final DocumentReference docRef = _firebaseFirestore
+          .collection("users")
+          .doc(userPresent.id!);
+      await docRef.update(userMap).timeout(Duration(seconds: 2));
+      return userPresent;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override
@@ -40,7 +44,7 @@ class UserService implements IUserService {
     final DocumentReference docRef = _firebaseFirestore
         .collection("users")
         .doc(user.id);
-    
+
     await docRef.update(userMap);
     _firebaseFirestore.terminate();
   }
@@ -49,7 +53,11 @@ class UserService implements IUserService {
   Future<User?> fetchUserId(String id) async {
     try {
       final DocumentSnapshot<Map<String, dynamic>> doc =
-          await _firebaseFirestore.collection("users").doc(id).get();
+          await _firebaseFirestore
+              .collection("users")
+              .doc(id)
+              .get()
+              .timeout(Duration(seconds: 2));
       if (!doc.exists || doc.data() == null) {
         debugPrint("Unable to find user");
         return null;

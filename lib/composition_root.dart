@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:chat/chat.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -26,6 +28,7 @@ import 'package:secuchat/ui/pages/chat_page/new_chat/new_chat.dart';
 import 'package:secuchat/ui/pages/chat_page/message_thread/message_thread.dart';
 import 'package:secuchat/ui/pages/home/home.dart';
 import 'package:secuchat/ui/pages/home/home_router.dart';
+import 'package:secuchat/ui/pages/miscellaneous/manage_storage.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
 import 'package:secuchat/unit_components.dart';
@@ -126,6 +129,12 @@ class CompositionRoot {
   }
 
   static Widget start() {
+    final String initialRoute =
+        WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+    // print("Initial Route name $initialRoute");
+    // if (initialRoute == "/manage-storage") {
+    //   return composeManageStorageUi();
+    // }
     _user = _authViewModel.signedInUser;
 
     return _handleNavigation(_user);
@@ -220,6 +229,10 @@ class CompositionRoot {
               user!, _user!, _encryptionViewmodel,
               chatId: user.id)));
     }
+  }
+
+  static Widget composeManageStorageUi() {
+    return ManageStorage(authViewModel: _authViewModel);
   }
 
   // static Widget composeNotifications() {

@@ -61,6 +61,7 @@ dependencies:
   awesome_notifications: ^0.10.1
   flutter_local_notifications: ^19.5.0
   permission_handler: ^12.0.1
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_lints: ^6.0.0
@@ -77,10 +78,7 @@ flutter:
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/sign_in_logo.png
-    - assets/google_icon.png
-    - assets/facebook_icon.png
-    - assets/email_icon.png
+    - assets/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
   # For details regarding adding assets from package dependencies, see

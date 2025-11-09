@@ -1,25 +1,31 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:secuchat/state_management/onboarding/onboarding_cubit.dart';
-import 'package:secuchat/state_management/onboarding/onboarding_state.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
 import 'package:secuchat/unit_components.dart';
+import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class Onboarding extends StatefulWidget {
-  final IOnboardingRouter router;
-
-  const Onboarding(this.router, {super.key});
+class ManageStorage extends StatefulWidget {
+  final AuthViewModel _authViewModel;
+  const ManageStorage({required AuthViewModel authViewModel, super.key})
+      : _authViewModel = authViewModel;
 
   @override
-  State<Onboarding> createState() => _OnboardingState();
+  State<ManageStorage> createState() => _ManageStorageState();
 }
 
-class _OnboardingState extends State<Onboarding> {
+class _ManageStorageState extends State<ManageStorage> {
+  bool _keyRegenerated = false;
+  bool _isRegenerateButtonLoading = false;
+  bool _clearAllChatsButtonLoading = false;
+  bool _chatsCleared = false;
+
   @override
-  bool isLoadingWithGoogle = false;
-  bool isLoadingWithFacebook = false;
+  void initState() {
+    // TODO: implement initState
+    print("In Manage Storage Screen");
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,33 +58,45 @@ class _OnboardingState extends State<Onboarding> {
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-            BlocConsumer<OnboardingCubit, OnboardingState>(
-                listener: (BuildContext context, OnboardingState state) {
-              if (state is OnboardingSuccess) {
-                widget.router.onSessionSuccess(context, state.user);
-              }
-            }, builder: (context, state) {
-              return Stack(
-                children: [
-                  signInButton(
-                    context,
-                    text: "Continue with Google :)",
-                    textColor: Colors.black,
-                    spaceBetween: 0.0,
-                    color: const Color.fromARGB(220, 255, 255, 255),
-                    imagePath: 'assets/google_icon.png',
-                    heightImage: 38.0,
-                    widthImage: 38.0,
-                    onPressed: () async => await _connectWithGoogle(),
-                  ),
-                  state is OnboardingLoading
-                      ? const Center(
-                          heightFactor: 1.4, child: CircularProgressIndicator())
-                      : const SizedBox(height: 0.0, width: 0.0)
-                ],
-              );
-            }),
+            Stack(
+              children: [
+                button(
+                  context,
+                  text: "Regenerate Private Key",
+                  textColor: Colors.black,
+                  spaceBetween: 10.0,
+                  color: const Color.fromARGB(220, 255, 255, 255),
+                  imagePath: 'assets/private_key.png',
+                  heightImage: 38.0,
+                  widthImage: 38.0,
+                  onPressed: () async => await _regenerateEncryptionKeys(),
+                ),
+                _isRegenerateButtonLoading
+                    ? const Center(
+                        heightFactor: 1.4, child: CircularProgressIndicator())
+                    : const SizedBox(height: 0.0, width: 0.0)
+              ],
+            ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+            Stack(
+              children: [
+                button(
+                  context,
+                  text: "Export Chats",
+                  textColor: Colors.black,
+                  spaceBetween: 10.0,
+                  color: const Color.fromARGB(220, 255, 255, 255),
+                  imagePath: 'assets/export_chats.png',
+                  heightImage: 38.0,
+                  widthImage: 38.0,
+                  onPressed: () async => await _exportChats(),
+                ),
+                _isRegenerateButtonLoading
+                    ? const Center(
+                        heightFactor: 1.4, child: CircularProgressIndicator())
+                    : const SizedBox(height: 0.0, width: 0.0)
+              ],
+            ),
             // Stack(
             //   children: [
             //     signInButton(
@@ -139,7 +157,7 @@ class _OnboardingState extends State<Onboarding> {
                   highlightColor: Colors.transparent,
                   splashColor: Colors.transparent,
                   child: const Text(
-                    "Need Help?",
+                    "Need help with something?",
                     style: TextStyle(
                       color: Colors.red,
                     ),
@@ -149,7 +167,7 @@ class _OnboardingState extends State<Onboarding> {
                       scheme: 'mailto',
                       path: 'devsrayash@gmail.com',
                       queryParameters: {
-                        'subject': 'Cannot Log In',
+                        "subject": "Error working",
                         'body': '',
                       },
                     );
@@ -166,7 +184,7 @@ class _OnboardingState extends State<Onboarding> {
     );
   }
 
-  Widget signInButton(BuildContext context,
+  Widget button(BuildContext context,
       {String? text,
       Color? color,
       Color? textColor,
@@ -211,18 +229,33 @@ class _OnboardingState extends State<Onboarding> {
     );
   }
 
-  Future<void> _connectWithGoogle() async {
-    if (isLoadingWithGoogle) return;
-    final onboardingCubit = context.read<OnboardingCubit>();
-    if (!isLoadingWithFacebook || !isLoadingWithGoogle) {
-      isLoadingWithGoogle = true;
-      try {
-        await onboardingCubit.signInWithGoogle();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Something went wrong, please try again")));
-      }
+  Future<void> _regenerateEncryptionKeys() async {
+    if (_isRegenerateButtonLoading || _clearAllChatsButtonLoading) return;
+    if (_keyRegenerated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Keys have been already regenerated!!")));
+      return;
     }
-    isLoadingWithGoogle = false;
+    _isRegenerateButtonLoading = true;
+    try {
+      final user = await widget._authViewModel.regenerateEncryption();
+      _keyRegenerated = true;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                "Error updating the keys, check your internet connection and try again!")));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Key generation successful!!")));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              "Error updating the keys, check your internet connection and try again!")));
+    } finally {
+      _isRegenerateButtonLoading = false;
+    }
   }
+
+  Future<void> _exportChats() async {}
 }
