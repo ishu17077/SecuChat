@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: "/",
       routes: {
-        "/": (context) => CompositionRoot.composeManageStorageUi(),
+        "/": (context) => CompositionRoot.start(),
         "/manage-storage": (_) => CompositionRoot.composeManageStorageUi(),
       },
     );
