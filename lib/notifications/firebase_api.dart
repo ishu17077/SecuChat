@@ -69,15 +69,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<String> _decryptMessage(Message message) async {
-  final key = await _encryptionViewmodel!.getChatAcmKey(message.from);
   if (message.iv == null) {
     return message.contents;
   }
-  if (key == null) {
-    return message.contents;
-  }
-  return await _encryptionViewmodel!.encryption
-      .decrypt(message.contents, message.iv!.bytes, key.secretKey);
+  return await _encryptionViewmodel!.decryptTextWithGrace(message);
 }
 
 Future<void> _miniCompositionRoot() async {

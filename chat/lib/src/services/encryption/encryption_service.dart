@@ -17,19 +17,13 @@ final class EncryptionService implements IEncryption {
       return encryptedText;
     }
     final messageContentsBytes = Uint8List.fromList(encryptedText.codeUnits);
-    try {
-      final decryptedMessageContentBytes = await aesGcmSecretKey.decryptBytes(
-        messageContentsBytes,
-        iv,
-      );
-      final decryptedMessage = String.fromCharCodes(
-        decryptedMessageContentBytes,
-      );
-      return utf8.decode(decryptedMessage.codeUnits);
-    } catch (e) {
-      debugPrint("Error: Cannot decrypt message $e");
-      return "This text cannot be decrypted";
-    }
+
+    final decryptedMessageContentBytes = await aesGcmSecretKey.decryptBytes(
+      messageContentsBytes,
+      iv,
+    );
+    final decryptedMessage = String.fromCharCodes(decryptedMessageContentBytes);
+    return utf8.decode(decryptedMessage.codeUnits);
   }
 
   @override
@@ -57,7 +51,6 @@ final class EncryptionService implements IEncryption {
     if (iv == null) {
       return text;
     }
-
     final messageContentBytes = Uint8List.fromList(utf8.encode(text));
 
     final encryptedMessageContentsBytes = await aesGcmSecretKey.encryptBytes(

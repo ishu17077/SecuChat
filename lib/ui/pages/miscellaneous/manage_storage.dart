@@ -1,17 +1,18 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
-import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
+import 'package:secuchat/ui/widgets/my_form_field.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
+import 'package:secuchat/viewmodels/miscellaneous/miscellaneous_viewmodel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ManageStorage extends StatefulWidget {
   final AuthViewModel _authViewModel;
   final IDataSource _dataSource;
+
   ManageStorage(
       {required AuthViewModel authViewModel,
       required IDataSource dataSource,
@@ -61,7 +62,7 @@ class _ManageStorageState extends State<ManageStorage> {
               child: Padding(
                 padding: EdgeInsets.only(
                     left: MediaQuery.of(context).size.width * 0.12),
-                child: const Text("Login",
+                child: const Text("Manage Storage",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 33,
@@ -282,23 +283,34 @@ class _ManageStorageState extends State<ManageStorage> {
       //       content: Text("Allow storage permission to export the database!")));
       //   return;
       // }
+      String? userId;
+      userId = widget._authViewModel.signedInUser?.id;
+      if (userId == null) {
+        throw Exception("User not signed in");
+      }
       final dbPath = widget._dataSource.getDatabasePath();
-      final outputPath = await FilePicker.platform.saveFile(
-          dialogTitle: "Please select output file to save database",
-          fileName: "secuchatDb.db",
-          bytes: await File(dbPath).readAsBytes(),
-          type: FileType.custom);
-      if (outputPath == null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Unable to save database!")));
-      } else {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("File saved!")));
+      final password = await showDialog<String>(
+          context: context, builder: _buildDialog, barrierDismissible: true);
+      if (password != null && password.length >= 8 && password.length < 16) {
+        final encryptedFileBytes = MiscellaneousViewmodel.encrypt(
+            password, userId, await File(dbPath).readAsBytes());
+        final outputPath = await FilePicker.platform.saveFile(
+            dialogTitle: "Please select output file to save database",
+            fileName: "secuchat.db.crypt",
+            bytes: encryptedFileBytes,
+            type: FileType.custom);
+        if (outputPath == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Unable to save database!")));
+        } else {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("File saved!")));
+        }
       }
     } catch (e) {
       print("An error occurred while saving the file: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Unable to save database!")));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Unable to save database! ${e.toString()}")));
     } finally {
       _exportChatsLoading = false;
     }
@@ -311,5 +323,122 @@ class _ManageStorageState extends State<ManageStorage> {
       status = await Permission.storage.status; // Re-check status after request
     }
     return status.isGranted;
+  }
+
+  Widget _buildDialog(BuildContext context) {
+    final controllerPassword = TextEditingController();
+    final controllerConfirmPassword = TextEditingController();
+    bool isPasswordValid = false;
+    bool isConfPasswordValid = false;
+    final formKey = GlobalKey<FormState>();
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) => false,
+      child: AlertDialog(
+        backgroundColor: kBackgroundColor,
+        shape: BeveledRectangleBorder(
+            borderRadius: BorderRadiusGeometry.circular(20)),
+        title: Text("Backup"),
+        content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+          return Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                MyFormField(
+                    onPressed: () {},
+                    prefixIcon: Icons.password,
+                    infoBox: "Password",
+                    heightFactor: 0.8,
+                    keyBoardType: TextInputType.visiblePassword,
+                    obscureText: true,
+                    onFocusChanged: (value) {},
+                    textEditingController: controllerPassword,
+                    validator: (value) {
+                      isPasswordValid = validatePasswordPattern(value ?? '');
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => setState(() {}));
+                      return isPasswordValid ? null : 'Weak Password';
+                    },
+                    suffixIcon: isPasswordValid
+                        ? greenCheckMark
+                        : controllerPassword.text.isEmpty
+                            ? null
+                            : redCross,
+                    formField: 0),
+                MyFormField(
+                    onPressed: () {},
+                    prefixIcon: Icons.password,
+                    infoBox: "Confirm Password",
+                    heightFactor: 0.8,
+                    keyBoardType: TextInputType.visiblePassword,
+                    obscureText: true,
+                    onFocusChanged: (value) {},
+                    textEditingController: controllerConfirmPassword,
+                    validator: (value) {
+                      isConfPasswordValid = controllerPassword.text == value;
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => setState(() {}));
+                      return isConfPasswordValid ? null : 'Weak Password';
+                    },
+                    suffixIcon: controllerConfirmPassword.text.isEmpty
+                        ? null
+                        : isConfPasswordValid
+                            ? greenCheckMark
+                            : redCross,
+                    formField: 1),
+                Text(
+                  "Please make sure, you remember this password, it won't be possible ti recover your chats if you forget it",
+                  style: TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 12,
+                  ),
+                ),
+                // TextFormField(
+                //   controller: controllerConfirmPassword,
+                //   decoration: InputDecoration(
+                //     hint: Text("Confirm Password"),
+                //   ),
+                //   obscureText: true,
+                //   validator: (value) {
+                //     return controllerPassword.text != value
+                //         ? "Passwords do not match"
+                //         : null;
+                //   },
+                // ),
+              ],
+            ),
+          );
+        }),
+        actions: [
+          TextButton(
+            child: Text("Encrypt"),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(context).pop(controllerPassword.text);
+              }
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  bool validatePasswordPattern(String password) {
+    /**r'^
+      (?=.*[A-Z])       // should contain at least one upper case
+     (?=.*[a-z])       // should contain at least one lower case
+    (?=.*?[0-9])      // should contain at least one digit
+      (?=.*?[!@#\$&*~]) // should contain at least one Special character
+      .{8,}             // Must be at least 8 characters in length  
+$ */
+    if (password.contains(RegExp(
+        r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&_*~]).{8,}$'))) {
+      return true;
+    }
+
+    return false;
   }
 }

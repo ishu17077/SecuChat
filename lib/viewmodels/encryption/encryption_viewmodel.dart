@@ -13,7 +13,7 @@ class EncryptionViewmodel {
 
   String? _privatKey;
   String? publicKey;
-  
+
   EncryptionViewmodel(
       this.encryption, this._dataSource, this._localCache, this._userService);
 
@@ -61,28 +61,73 @@ class EncryptionViewmodel {
     }
   }
 
-  Future<EncryptionKey?> getChatAcmKey(String userId) async {
+  Future<EncryptionKey?> getChatAcmKey(String userId,
+      {bool forceRefresh = false}) async {
     _privatKey ??= await _localCache.encryptGet('PRIVATE_KEY');
-    for (final key in keys) {
-      if (key.userId == userId) return key;
-    }
-    try {
-      User? user = await _dataSource.findUser(userId);
-      if (user == null) {
-        user = await _userService.fetchUserId(userId);
-      } else {
-        //TODO: Impl isolates
-        _checkKeyUpdatesInBackground(userId, user);
+    if (forceRefresh) {
+      for (final key in keys) {
+        if (key.userId == userId) {
+          keys.remove(key);
+          final user = await _userService.fetchUserId(userId);
+          final nKey = await encryption.deriveKey(JsonWebKeyPair(
+              privateKey: _privatKey!, publicKey: user!.publicKeyJwb!));
+          var encryptionKey = EncryptionKey(userId, nKey);
+          keys.insert(0, encryptionKey);
+          _dataSource.updateUser(user);
+          return encryptionKey;
+        }
       }
-      final encryptionKey = EncryptionKey(
-          userId,
-          await encryption.deriveKey(JsonWebKeyPair(
-              privateKey: _privatKey!, publicKey: user!.publicKeyJwb!)));
-      keys.add(encryptionKey);
-      return encryptionKey;
-    } catch (_) {
-      return null;
     }
+
+    if (!forceRefresh) {
+      for (final key in keys) {
+        if (key.userId == userId) return key;
+      }
+      try {
+        User? user = await _dataSource.findUser(userId);
+        if (user == null) {
+          user = await _userService.fetchUserId(userId);
+        } else {
+          //TODO: Impl isolates
+          _checkKeyUpdatesInBackground(userId, user);
+        }
+        final encryptionKey = EncryptionKey(
+            userId,
+            await encryption.deriveKey(JsonWebKeyPair(
+                privateKey: _privatKey!, publicKey: user!.publicKeyJwb!)));
+        keys.add(encryptionKey);
+        return encryptionKey;
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  Future<String> decryptTextWithGrace(Message message) async {
+    if (message.iv == null) {
+      return message.contents;
+    }
+    final encryptionKey = await getChatAcmKey(message.from);
+    if (message.iv != null && encryptionKey != null) {
+      try {
+        message.contents = await encryption.decrypt(
+            message.contents, message.iv!.bytes, encryptionKey.secretKey);
+        return message.contents;
+      } catch (e) {
+        try {
+          final encryptionKey =
+              await getChatAcmKey(message.from, forceRefresh: true);
+          if (encryptionKey != null) {
+            message.contents = await encryption.decrypt(
+                message.contents, message.iv!.bytes, encryptionKey.secretKey);
+            return message.contents;
+          }
+        } catch (e) {
+          return "This text cannot be decrypted";
+        }
+      }
+    }
+    return "This text cannot be decrypted";
   }
 
   void _checkKeyUpdatesInBackground(String userId, User? user) {

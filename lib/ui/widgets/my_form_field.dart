@@ -8,6 +8,7 @@ class MyFormField extends StatefulWidget {
   final IconData? prefixIcon;
   final Icon? suffixIcon;
   final int? formField;
+  final double? heightFactor;
   final Function(bool) onFocusChanged;
   final bool obscureText;
   final TextEditingController? textEditingController;
@@ -24,6 +25,7 @@ class MyFormField extends StatefulWidget {
       required this.textEditingController,
       required this.validator,
       required this.suffixIcon,
+      this.heightFactor,
       required this.formField});
 
   @override
@@ -49,7 +51,9 @@ class _MyFormFieldState extends State<MyFormField> {
             color: isClicked ? kTextFieldColor : Colors.transparent,
           ),
           padding: const EdgeInsets.only(top: 0, bottom: 0, left: 12),
-          height: MediaQuery.of(context).size.height * 0.075,
+          height: MediaQuery.of(context).size.height *
+              (widget.heightFactor ?? 1) *
+              0.075,
           width: MediaQuery.of(context).size.width * 0.85,
           child: TextFormField(
             style: const TextStyle(color: Colors.white),

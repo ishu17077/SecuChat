@@ -63,14 +63,8 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
       }
     });
     on<_MessageReceived>((event, emit) async {
-      final encryptionKey = await _encryption.getChatAcmKey(event.message.from);
-      if (event.message.iv != null && encryptionKey != null) {
-        event.message.contents = await _encryption.encryption.decrypt(
-            event.message.contents,
-            event.message.iv!.bytes,
-            encryptionKey.secretKey);
-      }
-
+      event.message.contents =
+          await _encryption.decryptTextWithGrace(event.message);
       emit(MessageState.received(event.message));
     });
   }
