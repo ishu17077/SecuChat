@@ -82,7 +82,7 @@ class AwesomeNotificationService implements INotificationService {
       ),
     ]);
     await _awesomeNotifications.setListeners(
-      onActionReceivedMethod: _onActionReceivedMethod,
+      onActionReceivedMethod: onActionReceivedMethod,
       onNotificationCreatedMethod: _checkIfNotificationWithThatIdAlreadyExist,
       // onNotificationDisplayedMethod: _onNotificationDisplay()
     );
@@ -124,7 +124,7 @@ class AwesomeNotificationService implements INotificationService {
         NotificationActionButton(
           key: "REPLY",
           label: "Reply",
-          actionType: ActionType.SilentAction,
+          actionType: ActionType.Default,
           enabled: true,
 
           requireInputText: true,
@@ -150,7 +150,7 @@ class AwesomeNotificationService implements INotificationService {
   }
 
   @pragma("vm:entry-point")
-  static Future<void> _onActionReceivedMethod(
+  static Future<void> onActionReceivedMethod(
       ReceivedAction receivedAction) async {
     if (receivedAction.buttonKeyInput.isEmpty) {
       final receiver =
@@ -185,25 +185,25 @@ class AwesomeNotificationService implements INotificationService {
         active: false,
         id: receivedAction.payload!['user.id'],
         photoUrl: receivedAction.payload!['user.photo_url']);
-    if (receivedAction.buttonKeyInput.isNotEmpty) {
-      final uMessageC = message.contents;
-      message.contents = receivedAction.buttonKeyInput;
-      message = await _encryptMessage(chat.userId, message);
-      message = await _messageService.send(message);
-      message.contents = uMessageC;
-      var lMessage = LocalMessage(
-          message,
-          Receipt(
-              messageId: message.id!,
-              recipientId: message.to,
-              status: ReceiptStatus.sent,
-              time: DateTime.now()),
-          chatId: chat.id,
-          userId: message.to);
-      int id = await _datasource.addMessage(lMessage);
-      lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), 'id': id});
-      _instance!.createNotification(chat, lMessage, silent: true);
-    }
+
+    final uMessageC = message.contents;
+    message.contents = receivedAction.buttonKeyInput;
+    message = await _encryptMessage(chat.userId, message);
+    message = await _messageService.send(message);
+    message.contents = uMessageC;
+    var lMessage = LocalMessage(
+        message,
+        Receipt(
+            messageId: message.id!,
+            recipientId: message.to,
+            status: ReceiptStatus.sent,
+            time: DateTime.now()),
+        chatId: chat.id,
+        userId: message.to);
+    int id = await _datasource.addMessage(lMessage);
+    lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), 'id': id});
+    lMessage.message.contents = "You: ${uMessageC}";
+    _instance!.createNotification(chat, lMessage, silent: true);
 
     return;
   }

@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 class MyFormField extends StatefulWidget {
   final String? infoBox;
   final TextInputType keyBoardType;
-  final VoidCallback? onPressed;
   final IconData? prefixIcon;
   final Icon? suffixIcon;
   final int? formField;
   final double? heightFactor;
-  final Function(bool) onFocusChanged;
   final bool obscureText;
+  final bool disabled;
   final TextEditingController? textEditingController;
   final String? Function(String?)? validator;
 
@@ -18,15 +17,14 @@ class MyFormField extends StatefulWidget {
       {super.key,
       this.infoBox = '',
       this.keyBoardType = TextInputType.none,
-      required this.onPressed,
       this.obscureText = false,
       required this.prefixIcon,
-      required this.onFocusChanged,
       required this.textEditingController,
       required this.validator,
       required this.suffixIcon,
       this.heightFactor,
-      required this.formField});
+      required this.formField,
+      this.disabled = false});
 
   @override
   State<MyFormField> createState() => _MyFormFieldState();
@@ -39,7 +37,6 @@ class _MyFormFieldState extends State<MyFormField> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (value) {
-        widget.onFocusChanged(value);
         setState(() {
           value ? isClicked = true : isClicked = false;
         });
@@ -58,6 +55,7 @@ class _MyFormFieldState extends State<MyFormField> {
           child: TextFormField(
             style: const TextStyle(color: Colors.white),
             autovalidateMode: AutovalidateMode.always,
+            enabled: !widget.disabled,
             controller: widget.textEditingController,
             decoration: InputDecoration(
               isDense: true,
@@ -94,7 +92,6 @@ class _MyFormFieldState extends State<MyFormField> {
             textInputAction: widget.formField == 4
                 ? TextInputAction.done
                 : TextInputAction.next,
-            onTap: widget.onPressed,
             keyboardType: widget.keyBoardType,
             obscureText: widget.obscureText,
             validator: widget.validator,

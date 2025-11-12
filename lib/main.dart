@@ -33,6 +33,7 @@ class MyApp extends StatelessWidget {
       routes: {
         "/": (context) => CompositionRoot.start(),
         "/manage-storage": (_) => CompositionRoot.composeManageStorageUi(),
+        // "/chat": (_) CompositionRoot.composeMessageThreadUi(receiver, me, encryption)
       },
     );
   }

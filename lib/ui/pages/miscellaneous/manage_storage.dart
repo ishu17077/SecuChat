@@ -3,13 +3,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
+import 'package:secuchat/ui/helpers/suffix_icon.dart';
+import 'package:secuchat/ui/widgets/beautiful_button.dart';
 import 'package:secuchat/ui/widgets/my_form_field.dart';
 import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:secuchat/viewmodels/miscellaneous/miscellaneous_viewmodel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ManageStorage extends StatefulWidget {
+class ManageStorage extends StatelessWidget {
   final AuthViewModel _authViewModel;
   final IDataSource _dataSource;
 
@@ -20,24 +22,12 @@ class ManageStorage extends StatefulWidget {
       : _authViewModel = authViewModel,
         _dataSource = dataSource;
 
-  @override
-  State<ManageStorage> createState() => _ManageStorageState();
-}
-
-class _ManageStorageState extends State<ManageStorage> {
   bool _keyRegenerated = false;
   bool _isRegenerateButtonLoading = false;
   bool _clearAllChatsButtonLoading = false;
   bool _chatsCleared = false;
   bool _exportChatsLoading = false;
   bool _chatsExported = false;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    print("In Manage Storage Screen");
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,44 +61,26 @@ class _ManageStorageState extends State<ManageStorage> {
               ),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-            Stack(
-              children: [
-                button(
-                  context,
-                  text: "Regenerate Private Key",
-                  textColor: Colors.black,
-                  spaceBetween: 10.0,
-                  color: const Color.fromARGB(220, 255, 255, 255),
-                  imagePath: 'assets/private_key.png',
-                  heightImage: 38.0,
-                  widthImage: 38.0,
-                  onPressed: () async => await _regenerateEncryptionKeys(),
-                ),
-                _isRegenerateButtonLoading
-                    ? const Center(
-                        heightFactor: 1.4, child: CircularProgressIndicator())
-                    : const SizedBox(height: 0.0, width: 0.0)
-              ],
+            BeautifulButton(
+              text: "Regenerate Private Key",
+              textColor: Colors.black,
+              spaceBetween: 10.0,
+              color: const Color.fromARGB(220, 255, 255, 255),
+              imagePath: 'assets/private_key.png',
+              heightImage: 38.0,
+              widthImage: 38.0,
+              onPressed: () async => await _regenerateEncryptionKeys(context),
             ),
             SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-            Stack(
-              children: [
-                button(
-                  context,
-                  text: "Export Chats",
-                  textColor: Colors.black,
-                  spaceBetween: 10.0,
-                  color: const Color.fromARGB(220, 255, 255, 255),
-                  imagePath: 'assets/export_chats.png',
-                  heightImage: 38.0,
-                  widthImage: 38.0,
-                  onPressed: () async => await _exportChats(),
-                ),
-                _clearAllChatsButtonLoading
-                    ? const Center(
-                        heightFactor: 1.4, child: CircularProgressIndicator())
-                    : const SizedBox(height: 0.0, width: 0.0)
-              ],
+            BeautifulButton(
+              text: "Export Chats",
+              textColor: Colors.black,
+              spaceBetween: 10.0,
+              color: const Color.fromARGB(220, 255, 255, 255),
+              imagePath: 'assets/export_chats.png',
+              heightImage: 38.0,
+              widthImage: 38.0,
+              onPressed: () async => await _exportChats(context),
             ),
             // Stack(
             //   children: [
@@ -197,52 +169,7 @@ class _ManageStorageState extends State<ManageStorage> {
     );
   }
 
-  Widget button(BuildContext context,
-      {String? text,
-      Color? color,
-      Color? textColor,
-      String? imagePath,
-      double? spaceBetween,
-      double? heightImage,
-      double? widthImage,
-      VoidCallback? onPressed}) {
-    return Align(
-      alignment: Alignment.center,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          shape: const StadiumBorder(),
-          backgroundColor: color,
-          minimumSize: Size(MediaQuery.of(context).size.width * 0.8,
-              MediaQuery.of(context).size.height * 0.05),
-          maximumSize: Size(MediaQuery.of(context).size.width * 0.80,
-              MediaQuery.of(context).size.height * 0.055),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            imagePath != null
-                ? Image.asset(imagePath,
-                    height: heightImage ?? 38.0, width: widthImage ?? 38.0)
-                : const SizedBox(),
-            SizedBox(width: spaceBetween ?? 5.0),
-            Align(
-              alignment: Alignment.center,
-              child: Text(
-                text ?? 'How about continuing with some brain ;D',
-                style: TextStyle(
-                  color: textColor,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _regenerateEncryptionKeys() async {
+  Future<void> _regenerateEncryptionKeys(BuildContext context) async {
     if (_isRegenerateButtonLoading ||
         _clearAllChatsButtonLoading ||
         _exportChatsLoading) return;
@@ -253,7 +180,7 @@ class _ManageStorageState extends State<ManageStorage> {
     }
     _isRegenerateButtonLoading = true;
     try {
-      final user = await widget._authViewModel.regenerateEncryption();
+      final user = await _authViewModel.regenerateEncryption();
       _keyRegenerated = true;
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -272,11 +199,13 @@ class _ManageStorageState extends State<ManageStorage> {
     }
   }
 
-  Future<void> _exportChats() async {
+  Future<void> _exportChats(BuildContext context) async {
     if (_isRegenerateButtonLoading ||
         _clearAllChatsButtonLoading ||
         _exportChatsLoading) return;
+
     _exportChatsLoading = true;
+
     try {
       // if (!(await _requestStoragePermission())) {
       //   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -284,11 +213,11 @@ class _ManageStorageState extends State<ManageStorage> {
       //   return;
       // }
       String? userId;
-      userId = widget._authViewModel.signedInUser?.id;
+      userId = _authViewModel.signedInUser?.id;
       if (userId == null) {
         throw Exception("User not signed in");
       }
-      final dbPath = widget._dataSource.getDatabasePath();
+      final dbPath = _dataSource.getDatabasePath();
       final password = await showDialog<String>(
           context: context, builder: _buildDialog, barrierDismissible: true);
       if (password != null && password.length >= 8 && password.length < 16) {
@@ -296,13 +225,14 @@ class _ManageStorageState extends State<ManageStorage> {
             password, userId, await File(dbPath).readAsBytes());
         final outputPath = await FilePicker.platform.saveFile(
             dialogTitle: "Please select output file to save database",
-            fileName: "secuchat.db.crypt",
+            fileName: "secuchat.db.secrypt",
             bytes: encryptedFileBytes,
             type: FileType.custom);
         if (outputPath == null) {
           ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("Unable to save database!")));
         } else {
+          _chatsExported = true;
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text("File saved!")));
         }
@@ -348,46 +278,35 @@ class _ManageStorageState extends State<ManageStorage> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 MyFormField(
-                    onPressed: () {},
                     prefixIcon: Icons.password,
                     infoBox: "Password",
                     heightFactor: 0.8,
                     keyBoardType: TextInputType.visiblePassword,
                     obscureText: true,
-                    onFocusChanged: (value) {},
                     textEditingController: controllerPassword,
                     validator: (value) {
-                      isPasswordValid = validatePasswordPattern(value ?? '');
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => setState(() {}));
-                      return isPasswordValid ? null : 'Weak Password';
+                      //! Setstate is missing, can introduce new bugs
+                      return validatePasswordPattern(value);
                     },
-                    suffixIcon: isPasswordValid
-                        ? greenCheckMark
-                        : controllerPassword.text.isEmpty
-                            ? null
-                            : redCross,
+                    suffixIcon: suffixIcon(
+                        controllerPassword.text, validatePasswordPattern),
                     formField: 0),
                 MyFormField(
-                    onPressed: () {},
                     prefixIcon: Icons.password,
                     infoBox: "Confirm Password",
                     heightFactor: 0.8,
                     keyBoardType: TextInputType.visiblePassword,
                     obscureText: true,
-                    onFocusChanged: (value) {},
                     textEditingController: controllerConfirmPassword,
                     validator: (value) {
-                      isConfPasswordValid = controllerPassword.text == value;
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => setState(() {}));
-                      return isConfPasswordValid ? null : 'Weak Password';
+                      //! Setstate is missing, can introduce new bugs
+                      return validateConfirmPassword(
+                          controllerPassword.text, value ?? '');
                     },
-                    suffixIcon: controllerConfirmPassword.text.isEmpty
-                        ? null
-                        : isConfPasswordValid
-                            ? greenCheckMark
-                            : redCross,
+                    suffixIcon: suffixIcon(controllerConfirmPassword.text, (_) {
+                      return validateConfirmPassword(controllerPassword.text,
+                          controllerConfirmPassword.text);
+                    }),
                     formField: 1),
                 Text(
                   "Please make sure, you remember this password, it won't be possible ti recover your chats if you forget it",
@@ -426,7 +345,7 @@ class _ManageStorageState extends State<ManageStorage> {
     );
   }
 
-  bool validatePasswordPattern(String password) {
+  String? validatePasswordPattern(String? password) {
     /**r'^
       (?=.*[A-Z])       // should contain at least one upper case
      (?=.*[a-z])       // should contain at least one lower case
@@ -434,11 +353,19 @@ class _ManageStorageState extends State<ManageStorage> {
       (?=.*?[!@#\$&*~]) // should contain at least one Special character
       .{8,}             // Must be at least 8 characters in length  
 $ */
-    if (password.contains(RegExp(
-        r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&_*~]).{8,}$'))) {
-      return true;
+    if (password != null &&
+        password.contains(RegExp(
+            r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&_*~]).{8,16}$'))) {
+      return "Password is not strong enough";
     }
 
-    return false;
+    return null;
+  }
+
+  String? validateConfirmPassword(String password, String confPassword) {
+    if (password == confPassword) {
+      return null;
+    }
+    return "Password and Confirm Passwords do not match";
   }
 }

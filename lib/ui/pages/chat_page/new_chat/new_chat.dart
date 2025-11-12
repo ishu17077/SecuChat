@@ -74,9 +74,10 @@ class _NewChatState extends State<NewChat> {
               ),
               Expanded(
                 child: ListView(
+                    physics: BouncingScrollPhysics(),
                     children: filterUsers.map((user) {
-                  return chatTile(user);
-                }).toList()),
+                      return chatTile(user);
+                    }).toList()),
               ),
             ]);
           }

@@ -6,6 +6,7 @@ import 'package:secuchat/state_management/home/home_state.dart';
 class HomeCubit extends Cubit<HomeState> {
   final IUserService _userService;
   final ILocalCache _localCache;
+  List<User> onlineUsers = [];
   HomeCubit(this._userService, this._localCache) : super(HomeInitial());
 
   Future<User> connect() async {
@@ -18,8 +19,8 @@ class HomeCubit extends Cubit<HomeState> {
 
   Future<void> activeUsers(User user) async {
     emit(HomeLoading());
-    final onlineUsers = await _userService.online();
-
+    //! Caching tecchnique
+    if (onlineUsers.isEmpty) onlineUsers = await _userService.online();
     onlineUsers.removeWhere((element) => element.id == user.id);
     emit(HomeSuccess(onlineUsers));
   }

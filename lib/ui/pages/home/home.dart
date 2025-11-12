@@ -87,7 +87,7 @@ class _HomeState extends State<Home>
 
         break;
       case AppLifecycleState.paused:
-        _isInBackground = true;
+        context.read<MessageBloc>().pause();
         context.read<TypingNotifBloc>().pause();
         _messageSubscription.resume();
         context.read<ReceiptBloc>().pause();

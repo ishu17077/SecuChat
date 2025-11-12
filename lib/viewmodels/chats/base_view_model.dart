@@ -27,7 +27,7 @@ class BaseViewModel {
         chats.insert(0, chat);
         int id = await dataSource.addMessage(message);
         message = mapIdToLocalMessage(message, "$id");
-        if (showNotification) CompositionRoot.createNotification(chat, message);
+        // if (showNotification) CompositionRoot.createNotification(chat, message);
         return "$id";
       }
     }
@@ -50,7 +50,7 @@ class BaseViewModel {
     chats.insert(0, chat);
     int id = await dataSource.addMessage(message);
     message = mapIdToLocalMessage(message, "$id");
-    if (showNotification) CompositionRoot.createNotification(chat, message);
+    // if (showNotification) CompositionRoot.createNotification(chat, message);
     return "$id";
   }
 

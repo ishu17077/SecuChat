@@ -201,25 +201,25 @@
 //     }
 //   }
 
-//   Widget sexyTealButton(context, {required VoidCallback? onPressed}) {
-//     return ElevatedButton(
-//       style: ButtonStyle(
-//         backgroundColor: WidgetStateProperty.all(kSexyTealColor),
-//         minimumSize: WidgetStateProperty.all(Size(
-//             MediaQuery.of(context).size.width * 0.55,
-//             MediaQuery.of(context).size.height * 0.075)),
-//         elevation: WidgetStateProperty.all(5.0),
-//         shape: WidgetStateProperty.all(
-//             RoundedRectangleBorder(borderRadius: BorderRadius.circular(35))),
-//       ),
-//       onPressed: onPressed,
-//       child: const Text(
-//         "SIGN IN",
-//         style: TextStyle(
-//           color: kBackgroundColor,
-//           fontSize: 15,
-//         ),
-//       ),
-//     );
-//   }
+  // Widget sexyTealButton(context, {required VoidCallback? onPressed}) {
+  //   return ElevatedButton(
+  //     style: ButtonStyle(
+  //       backgroundColor: WidgetStateProperty.all(kSexyTealColor),
+  //       minimumSize: WidgetStateProperty.all(Size(
+  //           MediaQuery.of(context).size.width * 0.55,
+  //           MediaQuery.of(context).size.height * 0.075)),
+  //       elevation: WidgetStateProperty.all(5.0),
+  //       shape: WidgetStateProperty.all(
+  //           RoundedRectangleBorder(borderRadius: BorderRadius.circular(35))),
+  //     ),
+  //     onPressed: onPressed,
+  //     child: const Text(
+  //       "SIGN IN",
+  //       style: TextStyle(
+  //         color: kBackgroundColor,
+  //         fontSize: 15,
+  //       ),
+  //     ),
+  //   );
+  // }
 // }

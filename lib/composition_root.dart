@@ -69,7 +69,7 @@ class CompositionRoot {
   static late AuthViewModel _authViewModel;
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
-  static late INotificationService notificationService;
+  static late INotificationService _notificationService;
   static late FirebaseMessaging _firebaseMessaging;
   static late BaseViewModel _baseViewModel;
   static late HomeRouter _homeRouter;
@@ -114,7 +114,7 @@ class CompositionRoot {
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     _awesomeNotifications = AwesomeNotifications();
-    notificationService = AwesomeNotificationService(
+    _notificationService = AwesomeNotificationService(
       _awesomeNotifications,
       _messageService,
       _dataSource,
@@ -158,14 +158,18 @@ class CompositionRoot {
   }
 
   static void removeAllNotifications() {
-    notificationService.cancelAll();
+    _notificationService.cancelAll();
+  }
+
+  static void removeChatNotifiactions(String chatId) {
+    _notificationService.cancel(int.tryParse(chatId) ?? 0);
   }
 
   static Widget composeMessageThreadUi(
       User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) {
     if (chatId != null) {
-      notificationService.removeChatNotification(chatId);
+      _notificationService.removeChatNotification(chatId);
     }
     final viewModel = ChatViewModel(_baseViewModel, chatId: chatId);
     final messageThreadCubit = MessageThreadCubit(viewModel);
@@ -220,22 +224,25 @@ class CompositionRoot {
   }
 
   static Future<void> _checkPayload(ReceivedAction? receivedAction) async {
-    if (receivedAction != null &&
-        receivedAction.payload != null &&
-        receivedAction.payload!["chat_id"] != null &&
-        receivedAction.payload!["user.id"] != null) {
-      final user =
-          await _dataSource.findUser(receivedAction.payload!["user.id"]!);
-      navigatorKey.currentState?.push(MaterialPageRoute(
-          builder: (context) => composeMessageThreadUi(
-              user!, _user!, _encryptionViewmodel,
-              chatId: user.id)));
+    if (receivedAction != null) {
+      return AwesomeNotificationService.onActionReceivedMethod(receivedAction);
     }
+    // if (receivedAction != null &&
+    //     receivedAction.payload != null &&
+    //     receivedAction.payload!["chat_id"] != null &&
+    //     receivedAction.payload!["user.id"] != null) {
+    //   final user =
+    //       await _dataSource.findUser(receivedAction.payload!["user.id"]!);
+    //   navigatorKey.currentState?.push(MaterialPageRoute(
+    //       builder: (context) => composeMessageThreadUi(
+    //           user!, _user!, _encryptionViewmodel,
+    //           chatId: receivedAction.payload!["chat_id"]!)));
+    // }
   }
 
   static Future<void> createNotification(
       Chat chat, LocalMessage message) async {
-    await notificationService.createNotification(chat, message);
+    await _notificationService.createNotification(chat, message);
   }
 
   static Widget composeManageStorageUi() {

@@ -133,4 +133,31 @@ class LocalDatabaseFactory {
       debugPrint("Indices creation failed");
     }
   }
+
+  Future<void> restoreFromDb(String dbPath) async {
+    final Database database = await openDatabase(dbPath);
+    final List<Map<String, dynamic>> users =
+        await (await getDatabase()).query('users');
+
+    final List<Map<String, dynamic>> chats =
+        await (await getDatabase()).query("chats");
+
+    final List<Map<String, dynamic>> messages =
+        await (await getDatabase()).query("messages");
+
+    await (await getDatabase()).transaction((txn) async {
+      for (final user in users) {
+        final userJson = Map<String, dynamic>.from(user);
+        await txn.insert("users", userJson,
+            conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+    });
+
+    await (await getDatabase()).transaction((txn) async {
+      for (final chat in chats) {
+        final chatsJson = Map<String, dynamic>.from(chat);
+        //TODO: Impl
+      }
+    });
+  }
 }

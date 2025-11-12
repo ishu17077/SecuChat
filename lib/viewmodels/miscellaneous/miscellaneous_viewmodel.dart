@@ -8,7 +8,7 @@ class MiscellaneousViewmodel {
   static const int _ivLength = 12;
   static const int _saltLength = 16;
   static const int _iterations = 1000;
-  static const int _keyLength = 48;
+  static const int _keyLength = 32;
   static Uint8List encrypt(String password, String userId, Uint8List bytes) {
     final salt = generateRandomBytes(_saltLength);
     final iv = IV.fromSecureRandom(_ivLength);

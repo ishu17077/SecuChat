@@ -114,17 +114,18 @@ class EncryptionViewmodel {
             message.contents, message.iv!.bytes, encryptionKey.secretKey);
         return message.contents;
       } catch (e) {
-        try {
-          final encryptionKey =
-              await getChatAcmKey(message.from, forceRefresh: true);
-          if (encryptionKey != null) {
-            message.contents = await encryption.decrypt(
-                message.contents, message.iv!.bytes, encryptionKey.secretKey);
-            return message.contents;
-          }
-        } catch (e) {
-          return "This text cannot be decrypted";
+        print("Cannot find encryption ID on first try");
+      }
+      try {
+        final encryptionKey =
+            await getChatAcmKey(message.from, forceRefresh: true);
+        if (encryptionKey != null) {
+          message.contents = await encryption.decrypt(
+              message.contents, message.iv!.bytes, encryptionKey.secretKey);
+          return message.contents;
         }
+      } catch (e) {
+        return "This text cannot be decrypted";
       }
     }
     return "This text cannot be decrypted";
@@ -132,10 +133,13 @@ class EncryptionViewmodel {
 
   void _checkKeyUpdatesInBackground(String userId, User? user) {
     _userService.fetchUserId(userId).then((value) async {
-      final aesGcmKey = await encryption.deriveKey(JsonWebKeyPair(
-          privateKey: _privatKey!, publicKey: user!.publicKeyJwb!));
-      keys.firstWhere((element) => element.userId == userId).secretKey =
-          aesGcmKey;
+      if (user != null) {
+        _dataSource.updateUser(user);
+        final aesGcmKey = await encryption.deriveKey(JsonWebKeyPair(
+            privateKey: _privatKey!, publicKey: user.publicKeyJwb!));
+        keys.firstWhere((element) => element.userId == userId).secretKey =
+            aesGcmKey;
+      }
     });
   }
 }

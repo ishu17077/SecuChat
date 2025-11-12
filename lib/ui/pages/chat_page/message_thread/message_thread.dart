@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:chat/chat.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/models/local_message.dart';
@@ -58,7 +59,7 @@ class _MessageThreadState extends State<MessageThread>
             widget.me,
             userWithChats: [receiver.id!]))
         : null;
-    _updateInitialReceipts();
+    _updateInitialReceipts(chatId);
     _updateOnMessageReceived();
     _updateOnReceiptReceived();
 
@@ -66,7 +67,7 @@ class _MessageThreadState extends State<MessageThread>
     super.initState();
   }
 
-  void _updateInitialReceipts() async {
+  void _updateInitialReceipts(String chatId) async {
     final messages = await messageThreadCubit.chatViewModel.getMessages(chatId);
     count = 0;
     for (var message in messages) {
@@ -102,13 +103,13 @@ class _MessageThreadState extends State<MessageThread>
         if (chatId.isNotEmpty && mounted) {
           messageThreadCubit.messages(chatId, forceRefresh: true).then(
             (_) {
-              _updateInitialReceipts();
+              _updateInitialReceipts(widget.chatId);
             },
           );
         }
 
         if (chatId.isNotEmpty) {
-          CompositionRoot.notificationService.removeChatNotification(chatId);
+          CompositionRoot.removeChatNotifiactions(chatId);
         }
         break;
       case AppLifecycleState.inactive:
@@ -295,7 +296,7 @@ class _MessageThreadState extends State<MessageThread>
   }
 
   Future<void> _sendReceipt(Message message, Receipt receipt) async {
-    if (receipt.status == ReceiptStatus.read) return;
+    // if (receipt.status == ReceiptStatus.read) return;
     receipt = Receipt(
       messageId: message.id!,
       recipientId: message.from,
