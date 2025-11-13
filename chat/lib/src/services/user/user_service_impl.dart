@@ -18,11 +18,17 @@ class UserService implements IUserService {
       if (userPresent != null && (user.publicKeyJwb != null)) {
         userPresent.publicKeyJwb = user.publicKeyJwb;
       }
+
+      if (userPresent != null && (user.name.isNotEmpty)) {
+        userPresent.name = user.name;
+      }
+
       if (userPresent == null) {
         return await _registerUserToDatabase(user);
       }
 
       var userMap = userPresent.toJSON();
+      userMap["name"] = user.name;
 
       final DocumentReference docRef = _firebaseFirestore
           .collection("users")

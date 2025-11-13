@@ -8,6 +8,7 @@ class MyFormField extends StatefulWidget {
   final Icon? suffixIcon;
   final int? formField;
   final double? heightFactor;
+  final StateSetter? parentSetState;
   final bool obscureText;
   final bool disabled;
   final TextEditingController? textEditingController;
@@ -18,6 +19,7 @@ class MyFormField extends StatefulWidget {
       this.infoBox = '',
       this.keyBoardType = TextInputType.none,
       this.obscureText = false,
+      this.parentSetState,
       required this.prefixIcon,
       required this.textEditingController,
       required this.validator,
@@ -32,6 +34,18 @@ class MyFormField extends StatefulWidget {
 
 class _MyFormFieldState extends State<MyFormField> {
   bool isClicked = false;
+
+  @override
+  void initState() {
+    if (widget.parentSetState != null && widget.textEditingController != null) {
+      widget.textEditingController!.addListener(
+        () {
+          widget.parentSetState!(() {});
+        },
+      );
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +97,7 @@ class _MyFormFieldState extends State<MyFormField> {
               errorStyle: const TextStyle(
                 height: 0,
                 fontSize: 0,
+                color: Colors.red,
               ),
               errorBorder: InputBorder.none,
             ),

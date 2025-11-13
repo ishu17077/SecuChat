@@ -258,8 +258,7 @@ class ManageStorage extends StatelessWidget {
   Widget _buildDialog(BuildContext context) {
     final controllerPassword = TextEditingController();
     final controllerConfirmPassword = TextEditingController();
-    bool isPasswordValid = false;
-    bool isConfPasswordValid = false;
+  
     final formKey = GlobalKey<FormState>();
     return PopScope(
       onPopInvokedWithResult: (didPop, result) => false,
@@ -280,6 +279,7 @@ class ManageStorage extends StatelessWidget {
                 MyFormField(
                     prefixIcon: Icons.password,
                     infoBox: "Password",
+                    parentSetState: setState,
                     heightFactor: 0.8,
                     keyBoardType: TextInputType.visiblePassword,
                     obscureText: true,
@@ -295,6 +295,7 @@ class ManageStorage extends StatelessWidget {
                     prefixIcon: Icons.password,
                     infoBox: "Confirm Password",
                     heightFactor: 0.8,
+                    parentSetState: setState,
                     keyBoardType: TextInputType.visiblePassword,
                     obscureText: true,
                     textEditingController: controllerConfirmPassword,
@@ -356,10 +357,11 @@ $ */
     if (password != null &&
         password.contains(RegExp(
             r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&_*~]).{8,16}$'))) {
-      return "Password is not strong enough";
+            
+      return null;
     }
 
-    return null;
+    return "Password is not strong enough";
   }
 
   String? validateConfirmPassword(String password, String confPassword) {

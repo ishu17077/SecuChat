@@ -134,18 +134,17 @@ class LocalDatabaseFactory {
     }
   }
 
-  Future<void> restoreFromDb(String dbPath) async {
-    final Database database = await openDatabase(dbPath);
-    final List<Map<String, dynamic>> users =
-        await (await getDatabase()).query('users');
+  Future<void> restoreFromDb(
+      {required String restoreDbPath, required Database db}) async {
+    final Database restoringDb = await openReadOnlyDatabase(restoreDbPath);
+    final List<Map<String, dynamic>> users = await restoringDb.query('users');
 
-    final List<Map<String, dynamic>> chats =
-        await (await getDatabase()).query("chats");
+    final List<Map<String, dynamic>> chats = await restoringDb.query("chats");
 
     final List<Map<String, dynamic>> messages =
-        await (await getDatabase()).query("messages");
+        await restoringDb.query("messages");
 
-    await (await getDatabase()).transaction((txn) async {
+    await db.transaction((txn) async {
       for (final user in users) {
         final userJson = Map<String, dynamic>.from(user);
         await txn.insert("users", userJson,
@@ -153,10 +152,19 @@ class LocalDatabaseFactory {
       }
     });
 
-    await (await getDatabase()).transaction((txn) async {
+    await db.transaction((txn) async {
       for (final chat in chats) {
-        final chatsJson = Map<String, dynamic>.from(chat);
-        //TODO: Impl
+        final chatJson = Map<String, dynamic>.from(chat);
+
+        await txn.insert("chats", chatJson,
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+    await db.transaction((txn) async {
+      for (final message in messages) {
+        final messageJson = Map<String, dynamic>.from(message);
+        await txn.insert("messages", messageJson,
+            conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });
   }

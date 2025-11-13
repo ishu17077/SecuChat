@@ -26,6 +26,7 @@ import 'package:secuchat/state_management/message_thread/message_thread_cubit.da
 import 'package:secuchat/state_management/onboarding/onboarding_cubit.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/state_management/typing/typing_notif_bloc.dart';
+import 'package:secuchat/ui/pages/account_page/account_info.dart';
 import 'package:secuchat/ui/pages/chat_page/new_chat/new_chat.dart';
 import 'package:secuchat/ui/pages/chat_page/message_thread/message_thread.dart';
 import 'package:secuchat/ui/pages/home/home.dart';
@@ -66,6 +67,7 @@ class CompositionRoot {
   static late TypingNotifBloc _typingNotifBloc;
   static late ChatsCubit _chatsCubit;
   static late HomeCubit _homeCubit;
+  static late OnboardingCubit _onboardingCubit;
   static late AuthViewModel _authViewModel;
   static late GoogleSignInViewModel _googleSignInViewModel;
   static late EmailSignInViewModel _emailSignInViewModel;
@@ -73,6 +75,7 @@ class CompositionRoot {
   static late FirebaseMessaging _firebaseMessaging;
   static late BaseViewModel _baseViewModel;
   static late HomeRouter _homeRouter;
+  static late IOnboardingRouter _onboardingRouter;
   static User? _user;
   static late EncryptionViewmodel _encryptionViewmodel;
   static late FirebaseNotifications _firebaseNotifications;
@@ -91,6 +94,7 @@ class CompositionRoot {
     _receiptService = ReceiptService(_firebaseFirestore);
     _firebaseMessaging = FirebaseMessaging.instance;
     _dataSource = SqfliteDatasource(_db);
+
     final encryptedSharedPref = EncryptedSharedPreferences(
         prefs: await SharedPreferences.getInstance(),
         mode: AESMode.gcm,
@@ -106,13 +110,16 @@ class CompositionRoot {
         ChatsViewModel(_baseViewModel, encryption: _encryptionViewmodel);
     _chatsCubit = ChatsCubit(viewModel);
     _homeCubit = HomeCubit(_userService, _localCache);
-
+    await _googleSignIn.initialize();
     _authViewModel = AuthViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
     _googleSignInViewModel = GoogleSignInViewModel(_googleSignIn, _firebaseAuth,
         _userService, _localCache, _encryptionViewmodel);
     _emailSignInViewModel = EmailSignInViewModel(
         _firebaseAuth, _userService, _localCache, _encryptionViewmodel);
+    _onboardingCubit = OnboardingCubit(
+        _authViewModel, _emailSignInViewModel, _googleSignInViewModel);
+    _onboardingRouter = OnboardingRouter(composeAccountInfoUi, composeHomeUi);
     _awesomeNotifications = AwesomeNotifications();
     _notificationService = AwesomeNotificationService(
       _awesomeNotifications,
@@ -186,14 +193,18 @@ class CompositionRoot {
   }
 
   static Widget composeOnboardingUi() {
-    _googleSignIn.initialize();
-    OnboardingCubit onboardingCubit = OnboardingCubit(
-        _authViewModel, _emailSignInViewModel, _googleSignInViewModel);
-    final IOnboardingRouter onboardingRouter = OnboardingRouter(composeHomeUi);
     return MultiBlocProvider(providers: [
-      BlocProvider(create: (context) => onboardingCubit),
+      BlocProvider.value(value: _onboardingCubit),
       //TODO: Image Cubit
-    ], child: Onboarding(onboardingRouter));
+    ], child: Onboarding(_onboardingRouter));
+  }
+
+  static Widget composeAccountInfoUi(User user) {
+    return BlocProvider(
+      create: (context) => _onboardingCubit,
+      child: AccountInfo(
+          user: user, datasource: _dataSource, router: _onboardingRouter),
+    );
   }
 
   static Widget composeNewChatUi(User me, EncryptionViewmodel encryption) {

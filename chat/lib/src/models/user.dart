@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {
   String? get id => _id;
-  final String name;
+  String name;
   final String username;
   final String email;
   //TODO: Impl of publickey
