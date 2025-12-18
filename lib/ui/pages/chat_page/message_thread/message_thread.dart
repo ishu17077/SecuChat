@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'package:chat/chat.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/models/local_message.dart';
@@ -38,7 +38,7 @@ class _MessageThreadState extends State<MessageThread>
   late final messageBloc = context.read<MessageBloc>();
   late final typingNotifBloc = context.read<TypingNotifBloc>();
   late final MessageThreadCubit _messageThreadCubit;
-  int count = 0;
+
   final GlobalKey _textBoxChangeKey = GlobalKey();
   Timer? _startTypingTimer;
   Timer? _stopTypingTimer;
@@ -59,27 +59,12 @@ class _MessageThreadState extends State<MessageThread>
             widget.me,
             userWithChats: [receiver.id!]))
         : null;
-    _updateInitialReceipts(chatId);
+
     _updateOnMessageReceived();
     _updateOnReceiptReceived();
-
-    //! _mystream was seperately assigned as it was changing with everytime something happens like a keyboard pop up lol, and that was bad like horrible, we need bloc
+    _sendUnsentMessages();
+    //// _mystream was seperately assigned as it was changing with everytime something happens like a keyboard pop up lol, and that was bad like horrible, we need bloc
     super.initState();
-  }
-
-  void _updateInitialReceipts(String chatId) async {
-    final messages = await messageThreadCubit.chatViewModel.getMessages(chatId);
-    count = 0;
-    for (var message in messages) {
-      if (message.receipt.status == ReceiptStatus.sending) {
-        messageBloc.add(MessageEvent.onMessageResend(message));
-      }
-      bool isMe = _isMe(message.message.from, widget.me.id!);
-      if (!isMe && message.receipt.status != ReceiptStatus.read) {
-        _sendReceipt(message.message, message.receipt);
-      }
-      if (!isMe && count++ >= 25) return;
-    }
   }
 
   @override
@@ -100,13 +85,13 @@ class _MessageThreadState extends State<MessageThread>
     switch (state) {
       case AppLifecycleState.resumed:
         _isInBackground = false;
-        if (chatId.isNotEmpty && mounted) {
-          messageThreadCubit.messages(chatId, forceRefresh: true).then(
-            (_) {
-              _updateInitialReceipts(widget.chatId);
-            },
-          );
-        }
+        // if (chatId.isNotEmpty && mounted) {
+        //   messageThreadCubit.messages(chatId, forceRefresh: true).then(
+        //     (_) {
+        //       _updateInitialReceipts(widget.chatId);
+        //     },
+        //   );
+        // }
 
         if (chatId.isNotEmpty) {
           CompositionRoot.removeChatNotifiactions(chatId);
@@ -219,7 +204,6 @@ class _MessageThreadState extends State<MessageThread>
             ],
           ),
         ),
-
         // }),
       ),
     );
@@ -227,6 +211,7 @@ class _MessageThreadState extends State<MessageThread>
 
   Widget _buildListOfMessages(List<LocalMessage> messages) => ListView.builder(
         reverse: true,
+        physics: BouncingScrollPhysics(),
         itemBuilder: (context, index) {
           // bool noMarginRequired = messageStore.senderEmail ==
           //     (previousMessageStore?.senderEmail ??
@@ -328,7 +313,7 @@ class _MessageThreadState extends State<MessageThread>
     typingNotifBloc.add(TypingNotifEvent.sent(typingEvent));
   }
 
-  bool _isMe(String sender, String myId) {
+  static bool _isMe(String sender, String myId) {
     bool isMe = sender == myId ? true : false;
     return isMe;
   }
@@ -408,6 +393,16 @@ class _MessageThreadState extends State<MessageThread>
     });
   }
 
+  void _sendUnsentMessages() async {
+    final unsentMessages = await _messageThreadCubit
+        .chatViewModel.baseViewModel.dataSource
+        .findChatUnsentMessages(chatId);
+
+    unsentMessages.forEach((unsentMessage) {
+      messageBloc.add(MessageEvent.onMessageResend(unsentMessage));
+    });
+  }
+
 //TODO: Impl Async Encryption
   // Uint8List _iv() {
   //   var random = Random.secure();
@@ -416,4 +411,23 @@ class _MessageThreadState extends State<MessageThread>
   //   return iv;
   // }
   //! isSeen not working
+}
+
+Future<List<LocalMessage>> _updateReceiptLogic(
+    List<LocalMessage> messageList, String myId) async {
+  return await Isolate.run<List<LocalMessage>>(() {
+    final List<LocalMessage> messagesToDoAnything = [];
+    int count = 0;
+    for (var message in messageList) {
+      if (message.receipt.status == ReceiptStatus.sending) {
+        messagesToDoAnything.add(message);
+      }
+      bool isMe = message.message.from == myId;
+      if (!isMe && message.receipt.status != ReceiptStatus.read) {
+        messagesToDoAnything.add(message);
+      }
+      if (!isMe && count++ >= 25) break;
+    }
+    return messagesToDoAnything;
+  });
 }

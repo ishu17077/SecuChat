@@ -54,7 +54,7 @@ class LocalMessage {
         time: DateTime.tryParse(messageMap[MessageTable.colExecutedAt] ?? '') ??
             DateTime.now(),
         status:
-            ReceiptStatusParsing.fromString(messageMap["receipt"] ?? 'sent'),
+            ReceiptStatusParsing.fromString(messageMap[MessageTable.colReceipt] ?? 'sent'),
       ),
       chatId: messageMap["chat_id"],
     );

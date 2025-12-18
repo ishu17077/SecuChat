@@ -32,7 +32,6 @@ class MessageService implements IMessageService {
     late final Message messageReturn;
     try {
       var messageJson = message.toJSON();
-      messageJson.remove("id");
       DocumentReference<Map<String, dynamic>> docRef = await _firestore
           .collection("messages")
           .add(messageJson)

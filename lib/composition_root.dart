@@ -34,7 +34,6 @@ import 'package:secuchat/ui/pages/home/home_router.dart';
 import 'package:secuchat/ui/pages/miscellaneous/manage_storage.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding.dart';
 import 'package:secuchat/ui/pages/onboarding/onboarding_router.dart';
-import 'package:secuchat/unit_components.dart';
 import 'package:secuchat/viewmodels/auth/auth_view_model.dart';
 import 'package:secuchat/viewmodels/auth/email_sign_in_view_model.dart';
 import 'package:secuchat/viewmodels/auth/google_sign_in_view_model.dart';
@@ -129,7 +128,7 @@ class CompositionRoot {
       _localCache,
     );
 
-    _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi);
+    _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi, composeAccountInfoUi);
     var status = await Permission.notification.status;
 
     if (status.isDenied) {

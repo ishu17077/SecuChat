@@ -3,10 +3,9 @@ import 'package:encrypt/encrypt.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
+import 'package:secuchat/state_management/message/message_bloc.dart';
 import 'package:secuchat/state_management/receipt/receipt_bloc.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
-import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
-import 'package:webcrypto/webcrypto.dart';
 
 class ChatViewModel {
   String? chatId;
@@ -21,6 +20,7 @@ class ChatViewModel {
     if (messages.isNotEmpty) {
       return messages;
     }
+
     messages = await baseViewModel.dataSource.findMessages(chatId);
     if (messages.isNotEmpty) chatId = chatId;
     return messages;
@@ -66,11 +66,12 @@ class ChatViewModel {
       userId: message.from,
     );
     //! CAUTION: Rare conflict if chatId is null, but shouldn't be the case
-    if (receiptStatus == null || receiptStatus == ReceiptStatus.read)
+    if (receiptStatus == null || receiptStatus == ReceiptStatus.read) {
       baseViewModel.chatOpened(this.chatId);
-
+    }
     messages.insert(0, localMessage);
   }
+
 
   Future<void> updateMessageReceipt(Receipt receipt,
       {String? localMessageId, Message? sMessage}) async {

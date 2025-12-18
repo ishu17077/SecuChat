@@ -47,7 +47,7 @@ class AuthViewModel {
   Future<User?> connectUser(User user) async {
     user.active = true;
     user.lastSeen = DateTime.now();
-    //TODO: IMpl private key
+    //TODO: Impl private key
     // final privateKey = await _localCache.encryptGet('private_key');
     // if (user.publicKeyJwb == null ||
     //     user.publicKeyJwb!.isEmpty ||

@@ -8,13 +8,16 @@ abstract class IHomeRouter {
       {String? chatId});
   Future<void> onShowNewChatUi(
       BuildContext context, User me, EncryptionViewmodel encryption);
+  Future<void> onShowAccountInfoUi(BuildContext context, User me);
 }
 
 class HomeRouter implements IHomeRouter {
   final Widget Function(User receiver, User me, EncryptionViewmodel encryption,
       {String? chatId}) showMessageThread;
   final Widget Function(User me, EncryptionViewmodel encryption) showNewChatUi;
-  HomeRouter(this.showMessageThread, this.showNewChatUi);
+  final Widget Function(User me) showAccountInfoUi;
+  HomeRouter(
+      this.showMessageThread, this.showNewChatUi, this.showAccountInfoUi);
 
   @override
   Future<void> onShowMessageThread(BuildContext context, User receiver, User me,
@@ -35,5 +38,11 @@ class HomeRouter implements IHomeRouter {
         MaterialPageRoute(
           builder: (context) => showNewChatUi(me, encryption),
         ));
+  }
+
+  @override
+  Future<void> onShowAccountInfoUi(BuildContext context, User me) {
+    return Navigator.push(context,
+        MaterialPageRoute(builder: (context) => showAccountInfoUi(me)));
   }
 }

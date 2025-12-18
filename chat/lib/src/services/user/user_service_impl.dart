@@ -59,16 +59,11 @@ class UserService implements IUserService {
   Future<User?> fetchUserId(String id) async {
     try {
       final DocumentSnapshot<Map<String, dynamic>> doc =
-          await _firebaseFirestore
-              .collection("users")
-              .doc(id)
-              .get()
-              .timeout(Duration(seconds: 2));
+          await _firebaseFirestore.collection("users").doc(id).get();
       if (!doc.exists || doc.data() == null) {
         debugPrint("Unable to find user");
         return null;
       }
-      if (doc.data() == null) return null;
       return _mapIdToUser(id, doc.data()!);
     } catch (e) {
       debugPrint(e.toString());

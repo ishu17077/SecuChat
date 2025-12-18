@@ -162,21 +162,27 @@ class SqfliteDatasource implements IDataSource {
   }
 
   @override
-  Future<void> updateMessageReceipt(String messageId, ReceiptStatus status,
+  Future<void> updateMessageReceipt(
+      String messageServerId, ReceiptStatus status,
       {String? localMessageId}) async {
     if (localMessageId != null) {
       await _db.rawUpdate(
-          """UPDATE ${MessageTable.tableName} SET ${MessageTable.colReceipt} = ?
+          """UPDATE ${MessageTable.tableName} SET ${MessageTable.colReceipt} = ?, ${MessageTable.colServerId} = ?
                  WHERE ${MessageTable.colId} = ? 
-                  AND ${MessageTable.colReceipt} != '${ReceiptStatus.read.value()}'
-                  """, [status.value(), localMessageId]);
+                  AND ${MessageTable.colReceipt} != 'read'
+                  """,
+          [
+            status.value(),
+            messageServerId == "" ? null : messageServerId,
+            localMessageId
+          ]);
       return;
     }
     await _db.rawUpdate(
         """UPDATE ${MessageTable.tableName} SET ${MessageTable.colReceipt} = ?
                  WHERE ${MessageTable.colServerId} = ? 
-                  AND ${MessageTable.colReceipt} != '${ReceiptStatus.read.value()}'
-                  """, [status.value(), messageId]);
+                  AND ${MessageTable.colReceipt} != 'read'
+                  """, [status.value(), messageServerId]);
   }
 
   @override
@@ -237,5 +243,17 @@ class SqfliteDatasource implements IDataSource {
   @override
   String getDatabasePath() {
     return _db.path;
+  }
+
+  @override
+  Future<List<LocalMessage>> findChatUnsentMessages(String chatId) async {
+    return await _db.transaction<List<LocalMessage>>((txn) async {
+      final unsentMessages = await txn.query(MessageTable.tableName,
+          where:
+              "${MessageTable.colReceipt} = ? AND ${MessageTable.colChatId} = ?",
+          whereArgs: [ReceiptStatus.sending.value(), chatId]);
+
+      return unsentMessages.map((e) => LocalMessage.fromJSON(e)).toList();
+    });
   }
 }

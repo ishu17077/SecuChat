@@ -1,5 +1,4 @@
 import 'package:chat/chat.dart';
-import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/models/chat.dart';
 import 'package:secuchat/models/local_message.dart';
 import 'package:secuchat/viewmodels/chats/base_view_model.dart';
@@ -43,6 +42,7 @@ class ChatsViewModel {
     final chats = await baseViewModel.dataSource.findAllChats();
     if (chats.length != baseViewModel.chats.length) baseViewModel.chats = chats;
   }
+
 
   Future<void> receivedMessage(String userId, Message message,
       {bool showNotification = false}) async {

@@ -36,7 +36,8 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
       }
       event.message.message = await _messageService.send(event.message.message);
       event.message.message.contents = nonEncryptedContents;
-      if (event.message.message.id != null) {
+      if (event.message.message.id != null &&
+          event.message.message.id!.isNotEmpty) {
         emit(MessageSentSuccess(event.message));
         return;
       }

@@ -64,6 +64,7 @@ class _HomeState extends State<Home>
     context.read<MessageBloc>().add(MessageEvent.subscribed(widget.me));
     context.read<MessageBloc>().resume();
     _updateChatsOnMessageReceived();
+    _resentUnsentMessages();
   }
 
   @override
@@ -295,16 +296,15 @@ class _HomeState extends State<Home>
     );
   }
 
+  void _resentUnsentMessages() async {
+    
+  }
+
   void _updateChatsOnMessageReceived() async {
     final chatsCubit = context.read<ChatsCubit>();
-    final receiptBloc = context.read<ReceiptBloc>();
+    // final receiptBloc = context.read<ReceiptBloc>();
     _messageSubscription = _messageBloc.stream.listen((state) async {
       if (state is MessageReceivedSuccess) {
-        receiptBloc.add(ReceiptEvent.onMessageSent(Receipt(
-            messageId: state.message.id!,
-            recipientId: state.message.from,
-            status: ReceiptStatus.delivered,
-            time: DateTime.now())));
         (await chatsCubit.viewModel.receivedMessage(
             state.message.from, state.message,
             showNotification: _isInBackground));

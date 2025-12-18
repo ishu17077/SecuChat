@@ -310,7 +310,7 @@ class ManageStorage extends StatelessWidget {
                     }),
                     formField: 1),
                 Text(
-                  "Please make sure, you remember this password, it won't be possible ti recover your chats if you forget it",
+                  "Please make sure, you remember this password, it won't be possible to recover your chats if you forget it",
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontSize: 12,
