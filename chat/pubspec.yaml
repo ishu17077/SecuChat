@@ -1,18 +1,17 @@
 name: chat
 description: "A new Flutter package project."
-version: 0.0.1
+version: 0.0.2
 homepage: Chat
 
 environment:
-  sdk: ^3.9.0
+  sdk: ^3.9.2
   flutter: ">=1.17.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  encrypt: ^5.0.3
   cloud_firestore: ^6.0.1
-  webcrypto: ^0.5.8
+  webcrypto: ^0.6.0
   encrypted_shared_preferences: ^3.0.1
   firebase_database: ^12.0.4
 

@@ -1,5 +1,5 @@
 plugins{
-    id 'com.google.gms.google-services' version '4.4.3'
+    id 'com.google.gms.google-services' version '4.4.4'
     id 'kotlin-android'
     id 'com.android.application'
     id "dev.flutter.flutter-gradle-plugin"
@@ -54,6 +54,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
 
     sourceSets {
@@ -113,9 +118,9 @@ android {
 
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
-    implementation('androidx.window:window:1.4.0')
-    implementation('androidx.window:window-java:1.4.0')
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation('androidx.window:window:1.5.1')
+    implementation('androidx.window:window-java:1.5.1')
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'

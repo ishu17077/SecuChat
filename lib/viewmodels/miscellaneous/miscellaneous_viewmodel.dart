@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:encrypt/encrypt.dart';
-import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
 class MiscellaneousViewmodel {
   static const int _ivLength = 12;
@@ -10,7 +9,7 @@ class MiscellaneousViewmodel {
   static const int _iterations = 1000;
   static const int _keyLength = 32;
   static Uint8List encrypt(String password, String userId, Uint8List bytes) {
-    final salt = generateRandomBytes(_saltLength);
+    final salt = Encrypted.fromSecureRandom(_saltLength).bytes;
     final iv = IV.fromSecureRandom(_ivLength);
     final key = Key.fromUtf8("$password$userId").stretch(
       _keyLength,
