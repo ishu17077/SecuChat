@@ -75,7 +75,7 @@ class MessageService implements IMessageService {
   }
 
   @override
-  Future<List<Message>> getMessages({required User activeUser}) async {
+  Future<List<Message>> getPendingMessages({required User activeUser}) async {
     return await _getLatestMessages(activeUser);
   }
 

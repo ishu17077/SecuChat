@@ -26,7 +26,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await _miniCompositionRoot();
     await _notificationService!.createTempNotif(694930);
     final messages = await MessageService(FirebaseFirestore.instance)
-        .getMessages(activeUser: _user!);
+        .getPendingMessages(activeUser: _user!);
     print(messages);
     messages.forEach((message) async {
       //TODO: Impl specific functions
