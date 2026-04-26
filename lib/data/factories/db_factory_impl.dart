@@ -25,7 +25,10 @@ class LocalDatabaseFactory {
     String databasePath = await getDatabasesPath();
     String dbPath = join(databasePath, "secuchat.db");
     _database = await openDatabase(dbPath,
-        onCreate: _populateDb, version: 4, onUpgrade: _upgradeDb);
+        onCreate: _populateDb,
+        version: 4,
+        onUpgrade: _upgradeDb,
+        onConfigure: _configureDb);
     return _database!;
   }
 
@@ -167,5 +170,9 @@ class LocalDatabaseFactory {
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });
+  }
+
+  Future<void> _configureDb(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 }
