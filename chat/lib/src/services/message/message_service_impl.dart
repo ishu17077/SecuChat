@@ -1,19 +1,39 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:chat/chat.dart' hide User;
+import 'package:chat/src/models/attachment.dart';
+import 'package:firebase_auth/firebase_auth.dart' as FAuth;
 import 'package:chat/src/models/message.dart';
 import 'package:chat/src/models/user.dart';
 import 'package:chat/src/services/message/message_service_contract.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 class MessageService implements IMessageService {
   final FirebaseFirestore _firestore;
-  // final IEncryption _encryption;
+  late final FAuth.User user;
   final StreamController<Message> _controller =
       StreamController<Message>.broadcast();
   StreamSubscription? _changeFeed;
+  late final Dio _dio;
+  final String serverUrl;
+  late final String? token;
 
-  MessageService(this._firestore);
+  MessageService(this._firestore, this.serverUrl){
+    assert(FAuth.FirebaseAuth.instance.currentUser != null, "Cannot instantiate FirebaseMessageService without FirebaseAuth Sign In")
+    user = FAuth.FirebaseAuth.instance.currentUser!;
+    _dio = Dio(BaseOptions(baseUrl: serverUrl));
+    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) async{
+        token ??= await user.getIdToken();
+        if(token != null){
+          options.headers["Authorization"] = "Bearer $token";
+        }else{
+          throw Exception("Cannot instantiate without token auth");
+        }
+      return handler.next(options);
+    },));
+  }
 
   @override
   void dispose() {
@@ -28,7 +48,16 @@ class MessageService implements IMessageService {
   }
 
   @override
-  Future<Message> send(Message message) async {
+  Future<Message> send(Message message, {Attachment? attachment}) async {
+    assert(
+      message.type != MessageType.text && attachment != null,
+      "Attachment cannot be null when message type is not text",
+    );
+
+    if (message.type != MessageType.text && attachment != null) {
+      _dio.post("")
+    }
+
     late final Message messageReturn;
     try {
       var messageJson = message.toJSON();
