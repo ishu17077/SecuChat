@@ -15,6 +15,7 @@ class MessageTable {
   static const String colExecutedAt = "executed_at";
   static const String colCreatedAt = "created_at";
   static const String colSender = 'sender';
+  static const String colParentMessageId = 'parent_message_id';
   static const String colContents = 'contents';
   static const String colServerId = 'server_id';
   static const String colReceipt = 'receipt';
@@ -28,4 +29,13 @@ class UserTable {
   static const String colName = "name";
   static const String photoUrl = "photo_url";
   static const String publicKeyJwb = "public_key_jwb";
+}
+
+class AttachmentTable {
+  static const String tableName = "attachments";
+  static const String colId = "id";
+  static const String colMessageId = "message_id";
+  static const String colFileLocation = "file_location";
+  static const String colFileName = "file_name";
+  static const String colFileType = "file_type";
 }

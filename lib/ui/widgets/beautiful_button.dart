@@ -84,6 +84,5 @@ class _BeautifulButtonState extends State<BeautifulButton> {
               ),
       ),
     );
-    ;
   }
 }

@@ -26,7 +26,7 @@ class LocalDatabaseFactory {
     String dbPath = join(databasePath, "secuchat.db");
     _database = await openDatabase(dbPath,
         onCreate: _populateDb,
-        version: 4,
+        version: 5,
         onUpgrade: _upgradeDb,
         onConfigure: _configureDb);
     return _database!;
@@ -35,6 +35,7 @@ class LocalDatabaseFactory {
   Future<void> _populateDb(Database db, int version) async {
     await _createChatTable(db);
     await _createMessageTable(db);
+    await _createAttachmentTable(db);
     await _createUserTable(db);
     await _createIndices(db);
   }
@@ -72,6 +73,17 @@ class LocalDatabaseFactory {
         await txn.execute("DROP TABLE OldMessageTable;");
         await txn.execute("PRAGMA foreign_keys = ON;");
       });
+    }
+    if (oldVer == 4 && newVer == 5) {
+      final batch = db.batch();
+      batch.execute(
+          """ALTER TABLE ${MessageTable.tableName} ALTER COLUMN ${MessageTable.colContents} DROP NOT NULL""");
+      batch.execute(
+          """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colParentMessageId} INTEGER DEFAULT NULL""");
+
+      batch.execute("""CREATE INDEX messages_parent_idx ON ${MessageTable.tableName} (${MessageTable.colParentMessageId}, ${MessageTable.colCreatedAt} DESC)""");
+      await batch.commit();
+      await _createAttachmentTable(db);
     }
   }
 
@@ -122,6 +134,17 @@ class LocalDatabaseFactory {
     });
   }
 
+  Future<void> _createAttachmentTable(Database db) async {
+    await db.execute("""CREATE TABLE ${AttachmentTable.tableName}(
+      ${AttachmentTable.colId} INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      ${AttachmentTable.colFileType} TEXT,
+      ${AttachmentTable.colFileLocation} TEXT,
+      ${AttachmentTable.colFileName} TEXT NOT NULL,
+      ${AttachmentTable.colMessageId} INTEGER UNIQUE NOT NULL,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE      
+    )""");
+  }
+
   Future<void> _createIndices(Database db) async {
     final batch = db.batch();
     try {
@@ -131,6 +154,8 @@ class LocalDatabaseFactory {
           "CREATE UNIQUE INDEX chat_identify ON ${ChatTable.tableName} (${ChatTable.colId}, ${ChatTable.colUserId}, ${ChatTable.colGroupId})");
       batch.execute(
           "CREATE INDEX messages_index ON ${MessageTable.tableName} (${MessageTable.colChatId}, ${MessageTable.colExecutedAt} DESC, ${MessageTable.colCreatedAt} DESC, ${MessageTable.colReceipt})");
+      batch.execute(
+          "CREATE INDEX messages_parent_idx ON ${MessageTable.tableName} (${MessageTable.colParentMessageId}, ${MessageTable.colCreatedAt} DESC)");
       await batch.commit();
     } catch (e) {
       debugPrint("Indices creation failed");

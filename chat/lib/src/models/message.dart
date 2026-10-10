@@ -1,12 +1,15 @@
+import 'package:chat/src/models/message_type.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
-
 
 class Message {
   String? get id => _id;
   final String from;
   final String to;
-  String contents;
+  String
+  contents; //! for attachments content will be divided in two strings seperated by ;
+  final MessageType type;
+  String? parentMessageId;
   final DateTime time;
   IV? iv;
   String? _id;
@@ -16,7 +19,9 @@ class Message {
     required this.to,
     required this.contents,
     required this.time,
+    this.type = MessageType.text,
     this.iv,
+    this.parentMessageId,
   });
 
   Map<String, dynamic> toJSON() => {
@@ -25,6 +30,7 @@ class Message {
     "contents": contents,
     "time": time,
     "iv": iv?.base64,
+    "parent_message_id": parentMessageId,
   };
 
   factory Message.fromJSON(Map<String, dynamic> map) {
@@ -33,11 +39,13 @@ class Message {
       from: map["from"]!,
       to: map["to"]!,
       contents: map["contents"],
+      type: MessageTypeParsing.fromString(map["type"] ?? 'text'),
       time: (map["time"] is DateTime
           ? map["time"]
           : map["time"] is Timestamp
           ? (map["time"] as Timestamp).toDate()
           : DateTime.parse(map["time"] ?? DateTime.now().toIso8601String())),
+      parentMessageId: map["parent_message_id"],
     );
     message._id = map["id"];
 
