@@ -32,7 +32,7 @@ dependencies:
   boxy: ^2.0.9
   build_runner: ^2.8.0
   cloud_firestore: ^6.0.2
-  cupertino_icons: ^1.0.2
+  cupertino_icons: ^2.0.0
   # encrypt: ^5.0.3
   encrypted_shared_preferences: ^3.0.1
   firebase_auth: ^6.1.0
@@ -52,17 +52,18 @@ dependencies:
   webcrypto: ^0.6.0
   chat:
     path: ./chat
-  equatable: ^2.0.7
+  equatable: ^3.0.0
   bloc: ^9.0.1
   flutter_bloc: ^9.1.1
   flutter_displaymode: ^0.7.0
   # libsignal_protocol_dart: ^0.7.4
-  flutter_secure_storage: ^10.0.0
-  awesome_notifications: ^0.10.1
-  flutter_local_notifications: ^19.5.0
-  permission_handler: ^12.0.1
+  flutter_secure_storage: ^11.2.0
+  awesome_notifications: ^0.12.1
+  flutter_local_notifications: ^22.3.2
+  permission_handler: ^13.0.2
   url_launcher: ^6.3.2
-  file_picker: ^10.3.3
+  file_picker: ^13.1.0
+
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
