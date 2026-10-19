@@ -101,7 +101,6 @@ class AwesomeNotificationService implements INotificationService {
         category: NotificationCategory.Message,
         wakeUpScreen: true,
         fullScreenIntent: true,
-        criticalAlert: !silent,
         payload: {
           'chat_id': chat.id,
           'message_id': message.id,

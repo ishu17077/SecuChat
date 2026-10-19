@@ -154,19 +154,22 @@ class _AccountInfoState extends State<AccountInfo> {
 
   Future<void> importChats() async {
     try {
-      final fileRes = await FilePicker.platform.pickFiles(
-        allowMultiple: false,
+      final fileRes = await FilePicker.pickFiles(
         type: FileType.custom,
+        androidOptions: AndroidOptions(),
         allowedExtensions: ["secrypt"],
         dialogTitle: "Import database",
       );
-      if (fileRes != null && fileRes.files.isNotEmpty) {
-        final XFile dbCrypt = fileRes.files.first.xFile;
+      if (fileRes.isNotEmpty) {
+        final XFile dbCrypt = fileRes.first.xFile;
         if (dbCrypt.name.split(".").last != "secrypt") {
+          if(mounted){
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text("Invalid file selected")));
-          return;
+       }  
+        return;
         }
+        if(mounted){
         final password =
             await showDialog<String?>(context: context, builder: _buildDialog);
         if (password != null && password.isNotEmpty) {
@@ -182,14 +185,17 @@ class _AccountInfoState extends State<AccountInfo> {
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text("Chat restore successful")));
         }
+        } 
       } else {
+        if(mounted){
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("Password cannot be empty")));
-      }
+      }}
     } catch (e) {
+      if(mounted){
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Something went wrong, try again! ${e.toString()}")));
-    }
+    }}
   }
 
   Future<void> updateUser(String name) async {

@@ -223,7 +223,7 @@ class ManageStorage extends StatelessWidget {
       if (password != null && password.length >= 8 && password.length < 16) {
         final encryptedFileBytes = MiscellaneousViewmodel.encrypt(
             password, userId, await File(dbPath).readAsBytes());
-        final outputPath = await FilePicker.platform.saveFile(
+        final outputPath = await FilePicker.saveFile(
             dialogTitle: "Please select output file to save database",
             fileName: "secuchat.db.secrypt",
             bytes: encryptedFileBytes,

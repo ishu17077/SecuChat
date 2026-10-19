@@ -15,8 +15,4 @@ class AttachmentService implements IAttachmentService {
     late final Attachment attachmentReturn;
     try {} catch (e) {}
   }
-
-  Future<void> removeDeliveredAttachment(String attachmentId) {
-    return _firestore.collection("attachments").doc(attachmentId).delete();
-  }
 }
