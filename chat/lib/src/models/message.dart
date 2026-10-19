@@ -1,3 +1,4 @@
+import 'package:chat/src/models/attachment.dart';
 import 'package:chat/src/models/message_type.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:encrypt/encrypt.dart';
@@ -12,6 +13,7 @@ class Message {
   String? parentMessageId;
   final DateTime time;
   IV? iv;
+  Attachment? attachment;
   String? _id;
 
   Message({
@@ -22,6 +24,7 @@ class Message {
     this.type = MessageType.text,
     this.iv,
     this.parentMessageId,
+    this.attachment,
   });
 
   Map<String, dynamic> toJSON() => {
@@ -31,6 +34,7 @@ class Message {
     "time": time,
     "iv": iv?.base64,
     "parent_message_id": parentMessageId,
+    "attachment": attachment?.toJson(),
   };
 
   factory Message.fromJSON(Map<String, dynamic> map) {
@@ -46,9 +50,11 @@ class Message {
           ? (map["time"] as Timestamp).toDate()
           : DateTime.parse(map["time"] ?? DateTime.now().toIso8601String())),
       parentMessageId: map["parent_message_id"],
+      attachment: map["attachment"] != null
+          ? Attachment.fromJson(map["attachment"])
+          : null,
     );
     message._id = map["id"];
-
     return message;
   }
 }
