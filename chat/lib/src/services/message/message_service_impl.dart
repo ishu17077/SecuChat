@@ -21,7 +21,7 @@ class MessageService implements IMessageService {
   late final String? token;
 
   MessageService(this._firestore, this.serverUrl){
-    assert(FAuth.FirebaseAuth.instance.currentUser != null, "Cannot instantiate FirebaseMessageService without FirebaseAuth Sign In")
+    assert(FAuth.FirebaseAuth.instance.currentUser != null, "Cannot instantiate FirebaseMessageService without FirebaseAuth Sign In");
     user = FAuth.FirebaseAuth.instance.currentUser!;
     _dio = Dio(BaseOptions(baseUrl: serverUrl));
     _dio.interceptors.add(InterceptorsWrapper(
