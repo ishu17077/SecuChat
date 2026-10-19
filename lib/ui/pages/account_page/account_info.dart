@@ -178,7 +178,7 @@ class _AccountInfoState extends State<AccountInfo> {
           await LocalDatabaseFactory().restoreFromDb(
               restoreDbPath: file.path,
               db: await LocalDatabaseFactory().getDatabase());
-
+          await file.delete();
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text("Chat restore successful")));
         }
