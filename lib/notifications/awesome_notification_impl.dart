@@ -201,7 +201,7 @@ class AwesomeNotificationService implements INotificationService {
         userId: message.to);
     int id = await _datasource.addMessage(lMessage);
     lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), 'id': id});
-    lMessage.message.contents = "You: ${uMessageC}";
+    lMessage.message.contents = "You: $uMessageC";
     _instance!.createNotification(chat, lMessage, silent: true);
 
     return;

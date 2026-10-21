@@ -6,6 +6,7 @@ import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/foundation.dart';
 import 'package:secuchat/cache/local_cache.dart';
+import 'package:secuchat/composition_root.dart';
 import 'package:secuchat/data/datasources/datasource_contract.dart';
 import 'package:secuchat/data/datasources/sqflite_datasource_impl.dart';
 import 'package:secuchat/data/factories/db_factory_impl.dart';
@@ -25,7 +26,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await _miniCompositionRoot();
     await _notificationService!.createTempNotif(694930);
-    final messages = await MessageService(FirebaseFirestore.instance)
+    final messages = await MessageService(FirebaseFirestore.instance, CompositionRoot.apiUrl)
         .getPendingMessages(activeUser: _user!);
     print(messages);
     messages.forEach((message) async {
@@ -78,7 +79,7 @@ Future<String> _decryptMessage(Message message) async {
 Future<void> _miniCompositionRoot() async {
   await Firebase.initializeApp();
   final firestore = FirebaseFirestore.instance;
-  _messageService ??= MessageService(firestore);
+  _messageService ??= MessageService(firestore, CompositionRoot.apiUrl);
   _db ??= await LocalDatabaseFactory().getDatabase();
   _datasource ??= SqfliteDatasource(_db!);
 

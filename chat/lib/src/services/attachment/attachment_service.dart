@@ -12,7 +12,7 @@ class AttachmentService implements IAttachmentService {
 
   @override
   Future<Attachment> send(Attachment attachment) async {
-    late final Attachment attachmentReturn;
     try {} catch (e) {}
+    return attachment;
   }
 }

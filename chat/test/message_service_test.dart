@@ -13,11 +13,11 @@ void main() {
   late final MockCollectionReference collectionRef;
   late final MockDocumentReference docRef;
   late final MockQuerySnapshot querySnapshot;
-  late final IEncryption encryption;
   late final IMessageService messageService;
   late final MockQuery query;
   late final MockDocumentChange documentChange;
   late final MockQueryDocumentSnapshot documentSnapshot;
+  late final String apiUrl;
 
   setUpAll(() {
     firebaseFirestore = MockFirebaseFirestore();
@@ -26,9 +26,9 @@ void main() {
     querySnapshot = MockQuerySnapshot();
     documentChange = MockDocumentChange();
     query = MockQuery();
-    encryption = EncryptionService();
     documentSnapshot = MockQueryDocumentSnapshot();
-    messageService = MessageService(firebaseFirestore);
+    apiUrl = String.fromEnvironment("API_URL", defaultValue: "https://secuchat-server.onrender.com");
+    messageService = MessageService(firebaseFirestore, apiUrl);
     when(firebaseFirestore.collection("messages")).thenReturn(collectionRef);
 
     when(query.snapshots()).thenAnswer((realInvocation) {
@@ -38,7 +38,7 @@ void main() {
     when(
       collectionRef.orderBy(any, descending: anyNamed('descending')),
     ).thenReturn(query);
-     when(
+    when(
       query.orderBy(any, descending: anyNamed('descending')),
     ).thenReturn(query);
     when(
