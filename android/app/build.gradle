@@ -1,6 +1,5 @@
 plugins{
-    id 'com.google.gms.google-services' version '4.4.4'
-    id 'kotlin-android'
+    id 'com.google.gms.google-services'
     id 'com.android.application'
     id "dev.flutter.flutter-gradle-plugin"
 }
@@ -33,27 +32,23 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace 'com.developerik.secuchat'
-    compileSdk flutter.compileSdkVersion
+    compileSdk 37
     ndkVersion "29.0.13846066"
-    
-    applicationVariants.all { variant ->
-        if (variant.buildType.name == "release") { 
-            variant.outputs.all { output ->
-                def abiName = output.getFilter(com.android.build.OutputFile.ABI)
-                def apkName = "SecuChat-${variant.versionName}-${variant.versionCode}-${abiName}-release.apk"
-                outputFileName = apkName
-            }
-        }
-    }
+//
+//    applicationVariants.all { variant ->
+//        if (variant.buildType.name == "release") {
+//            variant.outputs.all { output ->
+//                def abiName = output.getFilter(com.android.build.OutputFile.ABI)
+//                def apkName = "SecuChat-${variant.versionName}-${variant.versionCode}-${abiName}-release.apk"
+//                outputFileName = apkName
+//            }
+//        }
+//    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
     packagingOptions {
         jniLibs {
@@ -97,9 +92,10 @@ android {
             storePassword keystoreProperties['storePassword']
             storeFile rootProject.file(keystoreProperties['storeFile'])
             
-        } else {
-            throw new GradleException("key.properties file not found in ${keystorePropertiesFile.absolutePath}")
-        }
+        } 
+        // else {
+        //     throw new GradleException("key.properties file not found in ${keystorePropertiesFile.absolutePath}")
+        // }
     }
    }
     buildTypes {
@@ -111,6 +107,10 @@ android {
             // proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro' 
             signingConfig signingConfigs.release
         }
+
+        debug {
+        
+        }
     }
 }
 
@@ -118,7 +118,7 @@ android {
 
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation(platform("com.google.firebase:firebase-bom:35.0.2"))
     implementation('androidx.window:window:1.5.1')
     implementation('androidx.window:window-java:1.5.1')
     implementation("com.google.firebase:firebase-auth")

@@ -1,4 +1,5 @@
 {
   "cmake.sourceDirectory": "/home/ishukumar5663/AndroidStudioProjects/secuchat/linux",
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "interactive",
+  "java.compile.nullAnalysis.mode": "automatic"
 }
