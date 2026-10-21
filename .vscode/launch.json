@@ -5,45 +5,47 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "secuchat",
+      "name": "SecuChat",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [
-        "-vv"
+        "-vv",
+        "--dart-define-from-file=${workspaceFolder}/env.json"
       ]
     },
     {
-      "name": "secuchat (profile mode)",
+      "name": "SecuChat (profile mode)",
       "request": "launch",
       "type": "dart",
-      "flutterMode": "profile"
+      "flutterMode": "profile",
+       "args": [
+        "-vv",
+        "--dart-define-from-file=env.json"
+      ]
     },
     {
-      "name": "secuchat (release mode)",
+      "name": "SecuChat (release mode)",
       "request": "launch",
       "type": "dart",
-      "flutterMode": "release"
+      "flutterMode": "release",
+       "args": [
+        "-vv",
+        "--dart-define-from-file=env.json"
+      ]
     },
     {
-      "name": "webcrypto-0.5.3",
-      "cwd": "webcrypto-0.5.3",
-      "request": "launch",
-      "type": "dart"
-    },
-    {
-      "name": "webcrypto-0.5.3 (profile mode)",
-      "cwd": "webcrypto-0.5.3",
-      "request": "launch",
+      "name": "SecuChat (Trigger build APKs)",
+      "request": "attach",
       "type": "dart",
-      "flutterMode": "profile"
+      "preLaunchTask": "SecuChat(Build APKs)"
     },
     {
-      "name": "webcrypto-0.5.3 (release mode)",
-      "cwd": "webcrypto-0.5.3",
-      "request": "launch",
+      "name": "SecuChat (Trigger APKBundle)",
+      "request": "attach",
       "type": "dart",
-      "flutterMode": "release"
+      "preLaunchTask": "SecuChat(Build APKBundle)"
     }
-  ]
+  ],
+  
 }
