@@ -1,0 +1,31 @@
+{
+	"version": "2.0.0",
+	 "tasks":[
+		{
+      		"label": "SecuChat(Build APKs)",
+      		"type": "shell",
+      		"command": "flutter",
+      		"args": [
+       		"build",
+        	"apk",
+			"--release",
+        	"--split-per-abi",
+        	"--dart-define-from-file=${workspaceFolder}/env.json"
+    		],
+      		"problemMatcher": [],
+    	},
+				{
+      		"label": "SecuChat(Build APKBundle)",
+      		"type": "shell",
+      		"command": "flutter",
+      		"args": [
+       		"build",
+        	"apkbundle",
+			"--release",
+        	"--split-per-abi",
+        	"--dart-define-from-file=${workspaceFolder}/env.json"
+    		],
+      		"problemMatcher": [],
+    	}
+  ]
+}
