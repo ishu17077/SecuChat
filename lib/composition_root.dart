@@ -47,6 +47,7 @@ import 'package:sqflite/sqflite.dart';
 
 class CompositionRoot {
   static late FirebaseFirestore _firebaseFirestore;
+  static late String apiUrl;
   static late FirebaseDatabase _firebaseDatabase;
   static late FirebaseAuth _firebaseAuth;
   static late GoogleSignIn _googleSignIn;
@@ -78,6 +79,7 @@ class CompositionRoot {
   static late FirebaseNotifications _firebaseNotifications;
 
   static Future<void> configure() async {
+    apiUrl = String.fromEnvironment("API_URL", defaultValue: "https://secuchat-server.onrender.com");
     await Firebase.initializeApp();
     _firebaseFirestore = FirebaseFirestore.instance;
     _firebaseDatabase = FirebaseDatabase.instance;
@@ -86,7 +88,7 @@ class CompositionRoot {
     _userService = UserService(_firebaseFirestore);
     _db = await LocalDatabaseFactory().getDatabase();
     _encryption = EncryptionService();
-    _messageService = MessageService(_firebaseFirestore);
+    _messageService = MessageService(_firebaseFirestore, apiUrl);
     _typingNotification = TypingNotification(_firebaseDatabase);
     _receiptService = ReceiptService(_firebaseFirestore);
     _firebaseMessaging = FirebaseMessaging.instance;
@@ -126,7 +128,8 @@ class CompositionRoot {
       _localCache,
     );
 
-    _homeRouter = HomeRouter(composeMessageThreadUi, composeNewChatUi, composeAccountInfoUi);
+    _homeRouter = HomeRouter(
+        composeMessageThreadUi, composeNewChatUi, composeAccountInfoUi);
     var status = await Permission.notification.status;
 
     if (status.isDenied) {
