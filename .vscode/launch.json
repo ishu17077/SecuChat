@@ -11,7 +11,7 @@
       "program": "lib/main.dart",
       "args": [
         "-vv",
-        "--dart-define-from-file=${workspaceFolder}/env.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/config.json"
       ]
     },
     {
@@ -21,7 +21,7 @@
       "flutterMode": "profile",
        "args": [
         "-vv",
-        "--dart-define-from-file=env.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/config.json"
       ]
     },
     {
@@ -31,7 +31,7 @@
       "flutterMode": "release",
        "args": [
         "-vv",
-        "--dart-define-from-file=env.json"
+        "--dart-define-from-file=${workspaceFolder}/.env/config.json"
       ]
     },
     {

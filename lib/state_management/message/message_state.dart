@@ -8,8 +8,8 @@ sealed class MessageState extends Equatable {
   factory MessageState.sent(LocalMessage message) =>
       MessageSentSuccess(message);
 
-  factory MessageState.received(Message message) =>
-      MessageReceivedSuccess(message);
+  factory MessageState.received(Message message, {bool isDecrypted = true}) =>
+      MessageReceivedSuccess(message, isDecrypted: isDecrypted);
 
   @override
   List<Object?> get props => [];
@@ -35,7 +35,8 @@ class MessageSending extends MessageState {
 
 class MessageReceivedSuccess extends MessageState {
   final Message message;
-  const MessageReceivedSuccess(this.message);
+  final bool isDecrypted;
+  const MessageReceivedSuccess(this.message, {this.isDecrypted = true});
 
   @override
   List<Object?> get props => [message];

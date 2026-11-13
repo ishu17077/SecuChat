@@ -64,9 +64,10 @@ class MessageBloc extends Bloc<MessageEvent, MessageState> {
       }
     });
     on<_MessageReceived>((event, emit) async {
-      event.message.contents =
-          await _encryption.decryptTextWithGrace(event.message);
-      emit(MessageState.received(event.message));
+      final contents = await _encryption.decryptTextWithGrace(event.message);
+      event.message.contents = contents ?? "";
+      emit(MessageState.received(event.message,
+          isDecrypted: contents != null ? true : false));
     });
   }
   @override

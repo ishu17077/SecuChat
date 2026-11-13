@@ -8,8 +8,11 @@ class LocalMessage {
   String? _id;
   Message message;
   Receipt receipt;
+  bool isDecrypted;
+  Message? parentMessage;
 
-  LocalMessage(this.message, this.receipt, {this.chatId, this.userId})
+  LocalMessage(this.message, this.receipt,
+      {this.chatId, this.userId, this.isDecrypted = true, this.parentMessage})
       : assert(chatId != null || userId != null,
             "Both user_id and chat_id cannot be null");
 
@@ -22,6 +25,9 @@ class LocalMessage {
       MessageTable.colRecipient: message.to,
       MessageTable.colContents: message.contents,
       MessageTable.colServerId: message.id,
+      //TODO: Impl this
+      MessageTable.colParentMessageId: null,
+      MessageTable.colIsDecrypted: isDecrypted ? 0 : 1,
       MessageTable.colExecutedAt: receipt.time.toString(),
       MessageTable.colReceipt: receipt.status.value(),
       MessageTable.colCreatedAt: message.time.toString(),
@@ -46,6 +52,7 @@ class LocalMessage {
     });
     final LocalMessage localMessage = LocalMessage(
       message,
+
       //TODO receipt time
       Receipt(
         messageId: message.id ?? "${messageMap["id"]}",
@@ -53,10 +60,12 @@ class LocalMessage {
         //TODO: Impl
         time: DateTime.tryParse(messageMap[MessageTable.colExecutedAt] ?? '') ??
             DateTime.now(),
-        status:
-            ReceiptStatusParsing.fromString(messageMap[MessageTable.colReceipt] ?? 'sent'),
+        status: ReceiptStatusParsing.fromString(
+            messageMap[MessageTable.colReceipt] ?? 'sent'),
       ),
-      chatId: messageMap["chat_id"],
+      chatId: messageMap[MessageTable.colChatId],
+      isDecrypted: messageMap[MessageTable.colIsDecrypted] == 0 ? false : true,
+      //TODO: Impl ParentMessage
     );
     localMessage._id = "${messageMap["id"]}";
     return localMessage;

@@ -103,7 +103,7 @@ class EncryptionViewmodel {
     }
   }
 
-  Future<String> decryptTextWithGrace(Message message) async {
+  Future<String?> decryptTextWithGrace(Message message) async {
     if (message.iv == null) {
       return message.contents;
     }
@@ -125,10 +125,10 @@ class EncryptionViewmodel {
           return message.contents;
         }
       } catch (e) {
-        return "This text cannot be decrypted";
+        return null;
       }
     }
-    return "This text cannot be decrypted";
+    return null;
   }
 
   void _checkKeyUpdatesInBackground(String userId, User? user) {

@@ -33,7 +33,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace 'com.developerik.secuchat'
     compileSdk 37
-    ndkVersion "29.0.13846066"
+//    ndkVersion "29.0.13846066"
 //
 //    applicationVariants.all { variant ->
 //        if (variant.buildType.name == "release") {

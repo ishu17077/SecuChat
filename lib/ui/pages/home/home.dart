@@ -307,7 +307,7 @@ class _HomeState extends State<Home>
       if (state is MessageReceivedSuccess) {
         (await chatsCubit.viewModel.receivedMessage(
             state.message.from, state.message,
-            showNotification: _isInBackground));
+            showNotification: _isInBackground, isDecrypted: state.isDecrypted));
         await chatsCubit.chats();
       }
     });

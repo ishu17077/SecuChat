@@ -163,39 +163,42 @@ class _AccountInfoState extends State<AccountInfo> {
       if (fileRes.isNotEmpty) {
         final XFile dbCrypt = fileRes.first.xFile;
         if (dbCrypt.name.split(".").last != "secrypt") {
-          if(mounted){
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Invalid file selected")));
-       }  
-        return;
+          if (mounted) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text("Invalid file selected")));
+          }
+          return;
         }
-        if(mounted){
-        final password =
-            await showDialog<String?>(context: context, builder: _buildDialog);
-        if (password != null && password.isNotEmpty) {
-          Uint8List dbBytes = MiscellaneousViewmodel.decrypt(
-              password, widget.user.id!, await dbCrypt.readAsBytes());
-          final directory = await getApplicationDocumentsDirectory();
-          final File file = File("${directory.path}/temp.db");
-          await file.writeAsBytes(dbBytes);
-          await LocalDatabaseFactory().restoreFromDb(
-              restoreDbPath: file.path,
-              db: await LocalDatabaseFactory().getDatabase());
-          await file.delete();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Chat restore successful")));
+        if (mounted) {
+          final password = await showDialog<String?>(
+              context: context, builder: _buildDialog);
+          if (password != null && password.isNotEmpty) {
+            Uint8List dbBytes = MiscellaneousViewmodel.decrypt(
+                password, widget.user.id!, await dbCrypt.readAsBytes());
+            final directory = await getApplicationDocumentsDirectory();
+            final File file = File("${directory.path}/temp.db");
+            await file.writeAsBytes(dbBytes);
+            await LocalDatabaseFactory().restoreFromDb(
+                restoreDbPath: file.path,
+                db: await LocalDatabaseFactory().getDatabase());
+            await file.delete();
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Chat restore successful")));
+          }
         }
-        } 
       } else {
-        if(mounted){
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Password cannot be empty")));
-      }}
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Password cannot be empty")));
+        }
+      }
     } catch (e) {
-      if(mounted){
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Something went wrong, try again! ${e.toString()}")));
-    }}
+      print(e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Something went wrong, try again! ${e.toString()}")));
+      }
+    }
   }
 
   Future<void> updateUser(String name) async {

@@ -16,7 +16,7 @@ import 'package:secuchat/notifications/awesome_notification_impl.dart';
 import 'package:secuchat/notifications/notification_service_contract.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:secuchat/unit_components.dart';
+
 import 'package:secuchat/viewmodels/encryption/encryption_viewmodel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
@@ -26,8 +26,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await _miniCompositionRoot();
     await _notificationService!.createTempNotif(694930);
-    final messages = await MessageService(FirebaseFirestore.instance, CompositionRoot.apiUrl)
-        .getPendingMessages(activeUser: _user!);
+    final messages =
+        await MessageService(FirebaseFirestore.instance, CompositionRoot.apiUrl)
+            .getPendingMessages(activeUser: _user!);
     print(messages);
     messages.forEach((message) async {
       //TODO: Impl specific functions
@@ -47,16 +48,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         chatId = "${await _datasource!.addChat(chat)}";
       }
 
-      message.contents = await _decryptMessage(message);
+      final contents = await _decryptMessage(message);
 
       final receipt = Receipt(
           messageId: message.id!,
           recipientId: user!.id!,
           status: ReceiptStatus.delivered,
           time: DateTime.now());
-
-      LocalMessage lMessage =
-          LocalMessage(message, receipt, userId: message.from, chatId: chatId!);
+      message.contents = contents ?? "";
+      LocalMessage lMessage = LocalMessage(message, receipt,
+          userId: message.from, chatId: chatId!, isDecrypted: contents != null);
       int id = await _datasource!.addMessage(lMessage);
       lMessage = LocalMessage.fromJSON({...lMessage.toJSON(), "id": id});
       await _notificationService!.createNotification(chat, lMessage);
@@ -69,7 +70,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
-Future<String> _decryptMessage(Message message) async {
+Future<String?> _decryptMessage(Message message) async {
   if (message.iv == null) {
     return message.contents;
   }

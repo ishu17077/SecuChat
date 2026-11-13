@@ -19,6 +19,7 @@ class MessageTable {
   static const String colContents = 'contents';
   static const String colServerId = 'server_id';
   static const String colReceipt = 'receipt';
+  static const String colIsDecrypted = "is_decrypted";
 }
 
 class UserTable {

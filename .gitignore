@@ -60,7 +60,7 @@ app.*.map.json
 # Ignore Gradle build output directory
 build
 
-.env
+/.env/config.json
 
 # Java snapshots
 /**/*.hprof

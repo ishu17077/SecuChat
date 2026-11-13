@@ -1,4 +1,14 @@
-enum MessageType { text, image, audio, video, document, sticker, gif }
+enum MessageType {
+  text,
+  image,
+  audio,
+  video,
+  document,
+  sticker,
+  gif,
+  unsupported,
+  decryptionFailed,
+}
 
 extension MessageTypeParsing on MessageType {
   String value() => this.name;
@@ -6,7 +16,7 @@ extension MessageTypeParsing on MessageType {
   static MessageType fromString(String messageType) {
     return MessageType.values.firstWhere(
       (value) => value.name == messageType,
-      orElse: () => MessageType.text,
+      orElse: () => MessageType.unsupported,
     );
   }
 }

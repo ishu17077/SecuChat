@@ -1,5 +1,6 @@
 import 'package:secuchat/data/constants/table_names.dart';
 import 'package:flutter/foundation.dart';
+import 'package:secuchat/models/local_message.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -80,8 +81,10 @@ class LocalDatabaseFactory {
           """ALTER TABLE ${MessageTable.tableName} ALTER COLUMN ${MessageTable.colContents} DROP NOT NULL""");
       batch.execute(
           """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colParentMessageId} INTEGER DEFAULT NULL""");
-
-      batch.execute("""CREATE INDEX messages_parent_idx ON ${MessageTable.tableName} (${MessageTable.colParentMessageId}, ${MessageTable.colCreatedAt} DESC)""");
+      batch.execute(
+          """ALTER TABLE ${MessageTable.tableName} ADD COLUMN ${MessageTable.colIsDecrypted} BOOLEAN NOT NULL DEFAULT 1 CHECK (${MessageTable.colIsDecrypted} IN (0, 1))""");
+      batch.execute(
+          """CREATE INDEX messages_parent_idx ON ${MessageTable.tableName} (${MessageTable.colParentMessageId}, ${MessageTable.colCreatedAt} DESC)""");
       await batch.commit();
       await _createAttachmentTable(db);
     }
@@ -110,8 +113,11 @@ class LocalDatabaseFactory {
     ${MessageTable.colReceipt} TEXT NOT NULL,
     ${MessageTable.colContents} TEXT NOT NULL,
     ${MessageTable.colServerId} TEXT UNIQUE,
+    ${MessageTable.colParentMessageId} INTEGER REFERENCES ${MessageTable.tableName}(${MessageTable.colId}) DEFAULT NULL,
+    ${MessageTable.colIsDecrypted} BOOLEAN NOT NULL DEFAULT 1,
     ${MessageTable.colCreatedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    ${MessageTable.colExecutedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    ${MessageTable.colExecutedAt} TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CHECK (${MessageTable.colIsDecrypted} IN (0,1))
     )""").then((_) {
       debugPrint("Successfully created ${MessageTable.tableName} table");
     }).catchError((e) {
@@ -156,6 +162,7 @@ class LocalDatabaseFactory {
           "CREATE INDEX messages_index ON ${MessageTable.tableName} (${MessageTable.colChatId}, ${MessageTable.colExecutedAt} DESC, ${MessageTable.colCreatedAt} DESC, ${MessageTable.colReceipt})");
       batch.execute(
           "CREATE INDEX messages_parent_idx ON ${MessageTable.tableName} (${MessageTable.colParentMessageId}, ${MessageTable.colCreatedAt} DESC)");
+
       await batch.commit();
     } catch (e) {
       debugPrint("Indices creation failed");
@@ -170,12 +177,12 @@ class LocalDatabaseFactory {
     final List<Map<String, dynamic>> chats = await restoringDb.query("chats");
 
     final List<Map<String, dynamic>> messages =
-        await restoringDb.query("messages");
+        await restoringDb.query(MessageTable.tableName);
 
     await db.transaction((txn) async {
       for (final user in users) {
         final userJson = Map<String, dynamic>.from(user);
-        await txn.insert("users", userJson,
+        await txn.insert(UserTable.tableName, userJson,
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });
@@ -184,14 +191,14 @@ class LocalDatabaseFactory {
       for (final chat in chats) {
         final chatJson = Map<String, dynamic>.from(chat);
 
-        await txn.insert("chats", chatJson,
+        await txn.insert(ChatTable.tableName, chatJson,
             conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });
     await db.transaction((txn) async {
       for (final message in messages) {
-        final messageJson = Map<String, dynamic>.from(message);
-        await txn.insert("messages", messageJson,
+        final lMessage = LocalMessage.fromJSON(message);
+        await txn.insert(MessageTable.tableName, lMessage.toJSON(),
             conflictAlgorithm: ConflictAlgorithm.ignore);
       }
     });

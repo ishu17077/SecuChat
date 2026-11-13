@@ -43,9 +43,8 @@ class ChatsViewModel {
     if (chats.length != baseViewModel.chats.length) baseViewModel.chats = chats;
   }
 
-
   Future<void> receivedMessage(String userId, Message message,
-      {bool showNotification = false}) async {
+      {bool showNotification = false, bool isDecrypted = true}) async {
     LocalMessage localMessage = LocalMessage(
         message,
         Receipt(
@@ -54,10 +53,9 @@ class ChatsViewModel {
             status: ReceiptStatus.delivered,
             time: DateTime.now()),
         userId: userId);
-
+    localMessage.isDecrypted = isDecrypted;
     await baseViewModel.addMessage(localMessage,
         showNotification: showNotification);
-
     return;
   }
 }
